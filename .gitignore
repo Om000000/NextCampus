@@ -1,0 +1,23 @@
+# Java
+java/out/
+*.class
+*.jar
+!java/lib/README.txt
+
+# SQLite
+database/*.db
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+python/*.csv
+python/*.png
+
+# IDE / OS
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db

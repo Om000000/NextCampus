@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Student Attendance &amp; Academic Portal</title>
+  <style>
+    :root {
+      --primary: #107c41;
+      --primary-dark: #0b5a2f;
+      --primary-light: #e8f5ec;
+      --bg: #0d281e;
+      --card-bg: #ffffff;
+      --text: #1b2e25;
+      --text-muted: #536b5e;
+      --border: #d2ded7;
+      --danger: #c5221f;
+      --danger-bg: #fce8e6;
+      --success: #137333;
+      --success-bg: #e6f4ea;
+      --warning: #b06000;
+      --warning-bg: #fef7e0;
+      --notice-bg: #fff8e6;
+      --notice-border: #f5dc9e;
+      --notice-text: #7c4a03;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      background: linear-gradient(145deg, #0d281e 0%, #164230 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 480px;
+      margin: auto;
+    }
+
+    .brand {
+      text-align: center;
+      color: #ffffff;
+      margin-bottom: 14px;
+      padding-top: 4px;
+    }
+
+    .brand h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand p {
+      font-size: 0.85rem;
+      opacity: 0.85;
+      margin-top: 3px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 22px 18px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+    }
+
+    /* Tab switcher */
+    .tab-nav {
+      display: flex;
+      background: #f0f4f2;
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 16px;
+      gap: 4px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px 8px;
+      border: none;
+      background: transparent;
+      border-radius: 9px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .tab-btn.active {
+      background: #ffffff;
+      color: var(--primary);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    /* Teacher's Notice Banner */
+    .notice-card {
+      background: var(--notice-bg);
+      border: 1px solid var(--notice-border);
+      color: var(--notice-text);
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      font-size: 0.88rem;
+      line-height: 1.45;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .notice-card-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 4px;
+      color: #925807;
+    }
+
+    .notice-text {
+      font-weight: 600;
+      color: #5c3500;
+    }
+
+    /* Device Lock Pill */
+    .device-lock-banner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+
+    .device-lock-banner.locked {
+      background: #eef6ff;
+      color: #1a4a7a;
+      border: 1px solid #c8e1fc;
+    }
+
+    .device-lock-banner.unlocked {
+      background: #f4f6f5;
+      color: #556c60;
+      border: 1px solid #dbe2de;
+    }
+
+    .session-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 14px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+
+    .session-badge.active {
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      border: 1px solid #c2e2ce;
+    }
+
+    .session-badge.inactive {
+      background: var(--warning-bg);
+      color: var(--warning);
+      border: 1px solid #f6d89b;
+    }
+
+    .session-badge .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    input {
+      width: 100%;
+      padding: 13px 14px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text);
+      background: #fafcfb;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    input:focus {
+      border-color: var(--primary);
+      background: #ffffff;
+      box-shadow: 0 0 0 4px rgba(16, 124, 65, 0.12);
+    }
+
+    input:read-only {
+      background: #f1f5f3;
+      color: #334e40;
+      border-color: #d1ded7;
+      cursor: not-allowed;
+    }
+
+    input.hash-input {
+      font-family: "SFMono-Regular", Consolas, "Courier New", monospace;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-size: 1.25rem;
+      text-align: center;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.02rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #ffffff;
+      margin-top: 6px;
+      box-shadow: 0 4px 14px rgba(16, 124, 65, 0.35);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+      background: var(--primary-dark);
+    }
+
+    .btn-primary:disabled {
+      background: #9ab4a5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn-bt {
+      background: #f0f4f2;
+      color: var(--primary-dark);
+      font-size: 0.88rem;
+      padding: 10px;
+      margin-bottom: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .help-hint {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+      margin-top: 5px;
+    }
+
+    .msg-box {
+      margin-top: 14px;
+      padding: 13px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      line-height: 1.45;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .msg-box.err {
+      background: var(--danger-bg);
+      color: var(--danger);
+      border: 1px solid #fad2cf;
+    }
+
+    .msg-box.ok {
+      background: var(--success-bg);
+      color: var(--success);
+      border: 1px solid #b7e1cd;
+    }
+
+    /* Academic Progress & Completion Stats */
+    .progress-section {
+      margin-top: 18px;
+      background: #f8faf9;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .progress-section h4 {
+      font-size: 0.92rem;
+      color: var(--primary-dark);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .stat-row {
+      margin-bottom: 14px;
+    }
+
+    .stat-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .stat-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.84rem;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .progress-bar-bg {
+      background: #e2ebe6;
+      height: 10px;
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 6px;
+      background: linear-gradient(90deg, #107c41 0%, #1f9e58 100%);
+      transition: width 0.6s ease;
+    }
+
+    .progress-bar-fill.warning {
+      background: linear-gradient(90deg, #d97706 0%, #f59e0b 100%);
+    }
+
+    .remarks-box {
+      background: #ffffff;
+      border-left: 3px solid var(--primary);
+      padding: 8px 12px;
+      border-radius: 0 8px 8px 0;
+      margin-top: 10px;
+      font-size: 0.82rem;
+      color: #2c4436;
+      line-height: 1.4;
+    }
+
+    /* Marks Table styles */
+    .marks-card {
+      margin-top: 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fafcfb;
+      overflow: hidden;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .marks-header {
+      background: #f0f6f2;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .marks-header h4 {
+      font-size: 0.92rem;
+      color: var(--primary-dark);
+    }
+
+    .marks-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.86rem;
+    }
+
+    .marks-table th, .marks-table td {
+      padding: 9px 12px;
+      text-align: left;
+      border-bottom: 1px solid #eef2f0;
+    }
+
+    .marks-table th {
+      background: #fafcfb;
+      font-weight: 700;
+      color: var(--text-muted);
+      font-size: 0.76rem;
+      text-transform: uppercase;
+    }
+
+    .marks-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .marks-badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 5px;
+      font-weight: 700;
+      font-size: 0.8rem;
+    }
+
+    .badge-high { background: #e6f4ea; color: #137333; }
+    .badge-mid { background: #eef6ff; color: #1a4a7a; }
+    .badge-low { background: #fef7e0; color: #b06000; }
+
+    .marks-summary {
+      background: #f0f7f3;
+      padding: 11px 14px;
+      display: flex;
+      justify-content: space-between;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--primary-dark);
+      border-top: 1px solid var(--border);
+    }
+
+    .success-card {
+      text-align: center;
+      padding: 14px 6px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .success-icon {
+      width: 58px;
+      height: 58px;
+      background: var(--success-bg);
+      color: var(--success);
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+
+    .success-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--success);
+      margin-bottom: 4px;
+    }
+
+    .success-details {
+      background: #f8faf9;
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-top: 12px;
+      text-align: left;
+      font-size: 0.88rem;
+      border: 1px solid var(--border);
+      line-height: 1.5;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    footer {
+      text-align: center;
+      color: rgba(255, 255, 255, 0.65);
+      font-size: 0.75rem;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <h2>College Student Portal</h2>
+      <p>TY BBA CA – Semester 5</p>
+    </div>
+
+    <div class="card">
+      <!-- Live Teacher Notice / Comment Banner -->
+      <div id="noticeBanner" class="notice-card" style="display: none;">
+        <div class="notice-card-header">
+          <span>📢</span>
+          <span id="noticeAuthor">Teacher Notice</span>
+        </div>
+        <div class="notice-text" id="noticeText"></div>
+      </div>
+
+      <!-- Tab Navigation -->
+      <div class="tab-nav">
+        <button class="tab-btn active" id="tabPresenty" type="button" onclick="switchTab('presenty')">
+          ✔ Mark Attendance
+        </button>
+        <button class="tab-btn" id="tabMarks" type="button" onclick="switchTab('marks')">
+          📊 Progress &amp; Marks
+        </button>
+      </div>
+
+      <!-- Device Lock Status Banner -->
+      <div id="deviceBanner" class="device-lock-banner unlocked">
+        <span>📱</span>
+        <span id="deviceBannerText">Checking device registration…</span>
+      </div>
+
+      <!-- TAB 1: PRESENTY FORM -->
+      <div id="viewPresenty">
+        <!-- Session status banner -->
+        <div id="sessionBanner" class="session-badge inactive">
+          <span class="dot"></span>
+          <span id="sessionText">Checking classroom session…</span>
+        </div>
+
+        <form id="attendanceForm" onsubmit="event.preventDefault(); submitAttendance();">
+          <div class="form-group">
+            <label for="roll">Student Roll Number</label>
+            <input
+              id="roll"
+              name="roll"
+              type="text"
+              placeholder="e.g. 18 or BBA001"
+              autocomplete="off"
+              autocapitalize="characters"
+              required
+            />
+            <div class="help-hint" id="rollHint">
+              Device lock: Only ONE roll number per device is allowed.
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="hash">Live Classroom Hash</label>
+            <input
+              id="hash"
+              name="hash"
+              class="hash-input"
+              type="text"
+              maxlength="12"
+              placeholder="8-CHAR HASH"
+              autocomplete="off"
+              autocapitalize="characters"
+              required
+            />
+            <div class="help-hint">
+              Look at the teacher's screen for the live 8-character hash (updates every 30s).
+            </div>
+          </div>
+
+          <button class="btn btn-bt" type="button" id="btnBt" onclick="connectBluetooth()">
+            📡 Nearby Bluetooth Beacon (Optional)
+          </button>
+
+          <button class="btn btn-primary" type="submit" id="btnSubmit">
+            ✔ Verify &amp; Mark Present
+          </button>
+        </form>
+
+        <!-- Feedback message -->
+        <div class="msg-box" id="resultMsg" style="display: none;"></div>
+
+        <!-- Success View (hidden initially) -->
+        <div class="success-card" id="successCard" style="display: none;">
+          <div class="success-icon">✓</div>
+          <div class="success-title">Presenty Marked!</div>
+          <p style="color: var(--text-muted); font-size: 0.9rem;">
+            Attendance successfully recorded for your device.
+          </p>
+          <div class="success-details" id="successDetails"></div>
+
+          <!-- Academic & Practical Completion Stats -->
+          <div id="postPresentyStats"></div>
+
+          <!-- Academic Marks Breakdown after marking -->
+          <div id="postPresentyMarks"></div>
+        </div>
+      </div>
+
+      <!-- TAB 2: PROGRESS & MARKS VIEWER -->
+      <div id="viewMarks" style="display: none;">
+        <form id="marksForm" onsubmit="event.preventDefault(); loadStudentProgressAndMarks();">
+          <div class="form-group">
+            <label for="marksRoll">Student Roll Number</label>
+            <input
+              id="marksRoll"
+              type="text"
+              placeholder="e.g. 18 or BBA001"
+              autocomplete="off"
+              autocapitalize="characters"
+              required
+            />
+            <div class="help-hint">
+              Enter your registered roll number to view assignments, practicals &amp; marks.
+            </div>
+          </div>
+          <button class="btn btn-primary" type="submit" id="btnCheckMarks">
+            📊 View Progress &amp; Marks
+          </button>
+        </form>
+
+        <div class="msg-box" id="marksMsg" style="display: none;"></div>
+        <div id="statsResult"></div>
+        <div id="marksResult"></div>
+      </div>
+    </div>
+
+    <footer>
+      Student College Management System &bull; SQLite Verified
+    </footer>
+  </div>
+
+  <script>
+    // --- Pure JavaScript RFC-compliant SHA-256 ---
+    function sha256(ascii) {
+      function rightRotate(value, amount) {
+        return (value >>> amount) | (value << (32 - amount));
+      }
+      const mathPow = Math.pow;
+      const maxWord = mathPow(2, 32);
+      let result = "";
+      const words = [];
+      const asciiBitLength = ascii.length * 8;
+
+      const H = [
+        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+        0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+      ];
+
+      const K = [
+        0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+        0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+        0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+        0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+        0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+        0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+        0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+        0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+      ];
+
+      ascii += "\x80";
+      while ((ascii.length % 64) !== 56) ascii += "\x00";
+      for (let i = 0; i < ascii.length; i++) {
+        const j = ascii.charCodeAt(i);
+        words[i >> 2] |= j << ((3 - (i % 4)) * 8);
+      }
+      words[words.length] = ((asciiBitLength / maxWord) | 0);
+      words[words.length] = (asciiBitLength | 0);
+
+      const w = new Array(64);
+      for (let j = 0; j < words.length; j += 16) {
+        for (let i = 0; i < 16; i++) {
+          w[i] = words[j + i] | 0;
+        }
+        for (let i = 16; i < 64; i++) {
+          const w15 = w[i - 15];
+          const s0 = (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3));
+          const w2 = w[i - 2];
+          const s1 = (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10));
+          w[i] = (((w[i - 16] + s0) | 0) + ((w[i - 7] + s1) | 0)) | 0;
+        }
+
+        let a = H[0], b = H[1], c = H[2], d = H[3];
+        let e = H[4], f = H[5], g = H[6], h = H[7];
+
+        for (let i = 0; i < 64; i++) {
+          const S1 = rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25);
+          const ch = (e & f) ^ ((~e) & g);
+          const temp1 = ((((h + S1) | 0) + ((ch + K[i]) | 0)) | 0) + w[i] | 0;
+          const S0 = rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22);
+          const maj = (a & b) ^ (a & c) ^ (b & c);
+          const temp2 = (S0 + maj) | 0;
+
+          h = g;
+          g = f;
+          f = e;
+          e = (d + temp1) | 0;
+          d = c;
+          c = b;
+          b = a;
+          a = (temp1 + temp2) | 0;
+        }
+
+        H[0] = (H[0] + a) | 0;
+        H[1] = (H[1] + b) | 0;
+        H[2] = (H[2] + c) | 0;
+        H[3] = (H[3] + d) | 0;
+        H[4] = (H[4] + e) | 0;
+        H[5] = (H[5] + f) | 0;
+        H[6] = (H[6] + g) | 0;
+        H[7] = (H[7] + h) | 0;
+      }
+
+      for (let i = 0; i < 8; i++) {
+        for (let j = 3; j >= 0; j--) {
+          const byte = (H[i] >>> (j * 8)) & 0xff;
+          result += byte.toString(16).padStart(2, "0");
+        }
+      }
+      return result;
+    }
+
+    // --- Device ID Management (Anti-Proxy) ---
+    function getOrCreateDeviceId() {
+      let devId = localStorage.getItem("sms_device_id");
+      if (!devId) {
+        devId = "dev_" + Math.random().toString(36).substring(2, 10) + "_" + Date.now().toString(36);
+        localStorage.setItem("sms_device_id", devId);
+      }
+      return devId;
+    }
+
+    const deviceId = getOrCreateDeviceId();
+    let boundRollNo = localStorage.getItem("sms_bound_roll") || "";
+    let boundStudentName = localStorage.getItem("sms_bound_name") || "";
+    let currentSession = null;
+    let btDeviceName = "";
+    let btDeviceId = "";
+
+    const bannerEl = document.getElementById("sessionBanner");
+    const bannerTextEl = document.getElementById("sessionText");
+    const deviceBannerEl = document.getElementById("deviceBanner");
+    const deviceBannerTextEl = document.getElementById("deviceBannerText");
+    const noticeBannerEl = document.getElementById("noticeBanner");
+    const noticeTextEl = document.getElementById("noticeText");
+    const noticeAuthorEl = document.getElementById("noticeAuthor");
+    const resultEl = document.getElementById("resultMsg");
+    const submitBtn = document.getElementById("btnSubmit");
+    const rollInput = document.getElementById("roll");
+    const hashInput = document.getElementById("hash");
+    const marksRollInput = document.getElementById("marksRoll");
+
+    // Automatically convert inputs to uppercase
+    rollInput.addEventListener("input", (e) => { e.target.value = e.target.value.toUpperCase(); });
+    hashInput.addEventListener("input", (e) => { e.target.value = e.target.value.toUpperCase(); });
+    marksRollInput.addEventListener("input", (e) => { e.target.value = e.target.value.toUpperCase(); });
+
+    // --- Tab Switcher ---
+    function switchTab(tab) {
+      document.getElementById("tabPresenty").className = "tab-btn " + (tab === 'presenty' ? 'active' : '');
+      document.getElementById("tabMarks").className = "tab-btn " + (tab === 'marks' ? 'active' : '');
+      document.getElementById("viewPresenty").style.display = (tab === 'presenty' ? 'block' : 'none');
+      document.getElementById("viewMarks").style.display = (tab === 'marks' ? 'block' : 'none');
+      hideMsg();
+
+      if (tab === 'marks' && boundRollNo && !marksRollInput.value) {
+        marksRollInput.value = boundRollNo;
+        loadStudentProgressAndMarks();
+      }
+    }
+
+    // --- Display Notice Helper ---
+    function updateNoticeDisplay(notice) {
+      if (notice && notice.text) {
+        noticeBannerEl.style.display = "block";
+        noticeTextEl.textContent = notice.text;
+        noticeAuthorEl.textContent = notice.posted_by ? `Notice from ${notice.posted_by}` : "Classroom Notice";
+      } else {
+        noticeBannerEl.style.display = "none";
+      }
+    }
+
+    // --- Check Device Registration Status ---
+    async function checkDeviceStatus() {
+      try {
+        const res = await fetch(`/api/device-status?device_id=${encodeURIComponent(deviceId)}`);
+        const data = await res.json();
+        if (data.notice) {
+          updateNoticeDisplay(data.notice);
+        }
+        if (data.bound) {
+          boundRollNo = data.roll_no;
+          boundStudentName = data.student_name || "";
+          localStorage.setItem("sms_bound_roll", boundRollNo);
+          localStorage.setItem("sms_bound_name", boundStudentName);
+
+          rollInput.value = boundRollNo;
+          rollInput.readOnly = true;
+          marksRollInput.value = boundRollNo;
+          marksRollInput.readOnly = true;
+
+          deviceBannerEl.className = "device-lock-banner locked";
+          deviceBannerTextEl.innerHTML = `🔒 <strong>Device Locked:</strong> Roll ${boundRollNo}${boundStudentName ? " (" + boundStudentName + ")" : ""}`;
+          document.getElementById("rollHint").textContent = "🔒 This device is locked to your roll number (anti-proxy protection).";
+        } else {
+          // Server confirmed device is NOT bound (or teacher cleared locks!)
+          boundRollNo = "";
+          boundStudentName = "";
+          localStorage.removeItem("sms_bound_roll");
+          localStorage.removeItem("sms_bound_name");
+
+          rollInput.readOnly = false;
+          marksRollInput.readOnly = false;
+
+          deviceBannerEl.className = "device-lock-banner unlocked";
+          deviceBannerTextEl.innerHTML = "📱 <strong>Device Unregistered / Unlocked:</strong> 1 Roll No per device will be locked upon attendance submission.";
+          document.getElementById("rollHint").textContent = "ℹ️ Device will be locked to this roll number upon attendance submission.";
+
+          // If previously showing success card from a wiped binding, restore attendance form
+          if (document.getElementById("attendanceForm").style.display === "none") {
+            document.getElementById("attendanceForm").style.display = "block";
+            document.getElementById("successCard").style.display = "none";
+          }
+        }
+      } catch (e) {
+        if (boundRollNo) {
+          deviceBannerEl.className = "device-lock-banner locked";
+          deviceBannerTextEl.innerHTML = `🔒 <strong>Device Locked (Cached):</strong> Roll ${boundRollNo}`;
+        }
+      }
+    }
+
+    // --- Load Active Session & Notice ---
+    async function fetchSession() {
+      try {
+        const res = await fetch("/api/session");
+        const data = await res.json();
+        if (data.notice) {
+          updateNoticeDisplay(data.notice);
+        }
+        if (data.active) {
+          currentSession = data;
+          bannerEl.className = "session-badge active";
+          bannerTextEl.innerHTML = `Active: <strong>${data.subject}</strong> &bull; Ends ${data.ends_at.split(" ")[1] || data.ends_at}`;
+        } else {
+          currentSession = null;
+          bannerEl.className = "session-badge inactive";
+          bannerTextEl.textContent = "No active session. Teacher must start a session in the Java app.";
+        }
+      } catch (err) {
+        bannerEl.className = "session-badge inactive";
+        bannerTextEl.textContent = "Connecting to classroom server…";
+      }
+    }
+
+    // --- Optional Bluetooth Beacon Scan ---
+    async function connectBluetooth() {
+      hideMsg();
+      if (!navigator.bluetooth) {
+        showMsg("Bluetooth auto-scan is optional (requires HTTPS). Simply enter the live 8-character hash from the teacher screen!", "err");
+        return;
+      }
+      try {
+        const device = await navigator.bluetooth.requestDevice({ acceptAllDevices: true });
+        btDeviceName = device.name || "";
+        btDeviceId = device.id || "";
+        showMsg(`Bluetooth Beacon locked: ${btDeviceName || "(device connected)"}. Enter the live hash below.`, "ok");
+      } catch (err) {
+        if (err.name !== "NotFoundError") {
+          showMsg("Bluetooth note: " + (err.message || "Enter hash directly."), "err");
+        }
+      }
+    }
+
+    // --- Submit Attendance ---
+    async function submitAttendance() {
+      hideMsg();
+      const roll = rollInput.value.trim().toUpperCase();
+      const hash = hashInput.value.trim().toUpperCase();
+
+      if (!roll) {
+        showMsg("Please enter your Student Roll Number.", "err");
+        rollInput.focus();
+        return;
+      }
+
+      if (boundRollNo && boundRollNo !== roll) {
+        showMsg(`Proxy attendance blocked! This device is locked to Roll No ${boundRollNo}.`, "err");
+        rollInput.value = boundRollNo;
+        return;
+      }
+
+      if (!hash) {
+        showMsg("Please enter the live Classroom Hash shown on the teacher screen.", "err");
+        hashInput.focus();
+        return;
+      }
+
+      if (!currentSession || !currentSession.active) {
+        showMsg("No active attendance session. Teacher must start a session in the Java app first.", "err");
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Verifying attendance…";
+
+      try {
+        const effectiveDevId = btDeviceId || deviceId;
+        const proofPayload = `${hash}|${roll}|${effectiveDevId}|${currentSession.session_id}`;
+        const studentProof = sha256(proofPayload);
+
+        const res = await fetch("/api/presenty", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            roll_no: roll,
+            bluetooth_hash: hash,
+            device_id: deviceId,
+            bt_device_name: btDeviceName,
+            bt_device_id: effectiveDevId,
+            student_proof: studentProof
+          })
+        });
+
+        const data = await res.json();
+
+        if (data.ok) {
+          // Permanently lock device to this roll number on client
+          boundRollNo = data.roll_no;
+          boundStudentName = data.student;
+          localStorage.setItem("sms_bound_roll", boundRollNo);
+          localStorage.setItem("sms_bound_name", boundStudentName);
+          rollInput.readOnly = true;
+
+          deviceBannerEl.className = "device-lock-banner locked";
+          deviceBannerTextEl.innerHTML = `🔒 <strong>Device Locked:</strong> Roll ${boundRollNo} (${boundStudentName})`;
+
+          if (data.notice) {
+            updateNoticeDisplay(data.notice);
+          }
+
+          // Show Success Card
+          document.getElementById("attendanceForm").style.display = "none";
+          const detailsEl = document.getElementById("successDetails");
+          detailsEl.innerHTML = `
+            <div><strong>Student:</strong> ${data.student}</div>
+            <div><strong>Roll No:</strong> ${data.roll_no}</div>
+            <div><strong>Subject:</strong> ${data.subject}</div>
+            <div><strong>Device Status:</strong> Device Bound &amp; Verified</div>
+            <div><strong>Recorded At:</strong> ${new Date().toLocaleTimeString()}</div>
+          `;
+
+          // Display Academic & Practical Stats
+          if (data.academic_stats) {
+            renderAcademicStats(data.academic_stats, document.getElementById("postPresentyStats"));
+          }
+
+          // Display marks in the post-presenty view
+          if (data.marks_data && data.marks_data.marks) {
+            renderMarksTable(data.marks_data, document.getElementById("postPresentyMarks"), true);
+          }
+
+          document.getElementById("successCard").style.display = "block";
+        } else {
+          showMsg(data.message || "Failed to mark attendance. Check details and try again.", "err");
+        }
+      } catch (err) {
+        showMsg("Network error. Make sure your phone is connected to the same Wi-Fi as the teacher PC.", "err");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = "✔ Verify &amp; Mark Present";
+      }
+    }
+
+    // --- Load Student Progress & Marks (Dedicated Tab) ---
+    async function loadStudentProgressAndMarks() {
+      const roll = marksRollInput.value.trim().toUpperCase();
+      const marksMsg = document.getElementById("marksMsg");
+      const marksResult = document.getElementById("marksResult");
+      const statsResult = document.getElementById("statsResult");
+      marksMsg.style.display = "none";
+      marksResult.innerHTML = "";
+      statsResult.innerHTML = "";
+
+      if (!roll) {
+        marksMsg.textContent = "Please enter your roll number.";
+        marksMsg.className = "msg-box err";
+        marksMsg.style.display = "block";
+        return;
+      }
+
+      const btn = document.getElementById("btnCheckMarks");
+      btn.disabled = true;
+      btn.textContent = "Loading progress…";
+
+      try {
+        const res = await fetch(`/api/student-marks?roll_no=${encodeURIComponent(roll)}&device_id=${encodeURIComponent(deviceId)}`);
+        const data = await res.json();
+        if (data.notice) {
+          updateNoticeDisplay(data.notice);
+        }
+        if (data.ok) {
+          if (data.academic_stats) {
+            renderAcademicStats(data.academic_stats, statsResult);
+          }
+          renderMarksTable(data, marksResult, false);
+        } else {
+          marksMsg.textContent = data.message || "No records found.";
+          marksMsg.className = "msg-box err";
+          marksMsg.style.display = "block";
+        }
+      } catch (err) {
+        marksMsg.textContent = "Network error while fetching student data.";
+        marksMsg.className = "msg-box err";
+        marksMsg.style.display = "block";
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = "📊 View Progress &amp; Marks";
+      }
+    }
+
+    // --- Render Academic Stats (Assignments & Practicals) Helper ---
+    function renderAcademicStats(stats, targetEl) {
+      if (!stats) return;
+
+      const aPct = stats.assignment_percentage || 0;
+      const pPct = stats.practical_percentage || 0;
+
+      targetEl.innerHTML = `
+        <div class="progress-section">
+          <h4>📋 Assignment &amp; Practical Completion</h4>
+          
+          <div class="stat-row">
+            <div class="stat-labels">
+              <span>📝 Assignments Completed</span>
+              <span><strong>${stats.assignments_completed} / ${stats.total_assignments}</strong> (${aPct}%)</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill ${aPct < 50 ? 'warning' : ''}" style="width: ${Math.min(aPct, 100)}%;"></div>
+            </div>
+          </div>
+
+          <div class="stat-row">
+            <div class="stat-labels">
+              <span>🧪 Practical Journal Certified</span>
+              <span><strong>${stats.practicals_completed} / ${stats.total_practicals}</strong> (${pPct}%)</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill ${pPct < 50 ? 'warning' : ''}" style="width: ${Math.min(pPct, 100)}%;"></div>
+            </div>
+          </div>
+
+          ${stats.remarks ? `
+            <div class="remarks-box">
+              <strong>Teacher Remarks:</strong> ${stats.remarks}
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    // --- Render Marks Table Helper ---
+    function renderMarksTable(data, targetEl, isCompact) {
+      if (!data.marks || data.marks.length === 0) {
+        targetEl.innerHTML = `
+          <div class="marks-card">
+            <div class="marks-header">
+              <h4>Academic Marks for Roll ${data.roll_no || boundRollNo}</h4>
+            </div>
+            <div style="padding: 16px; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+              No marks recorded yet for this student.
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      let rowsHtml = "";
+      data.marks.forEach(m => {
+        let badgeClass = "badge-mid";
+        if (m.percentage >= 75) badgeClass = "badge-high";
+        else if (m.percentage < 40) badgeClass = "badge-low";
+
+        rowsHtml += `
+          <tr>
+            <td>
+              <strong>${m.subject_name}</strong>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">${m.exam_type}</div>
+            </td>
+            <td><strong>${m.marks_obtained}</strong> / ${m.max_marks}</td>
+            <td><span class="marks-badge ${badgeClass}">${m.percentage}%</span></td>
+          </tr>
+        `;
+      });
+
+      targetEl.innerHTML = `
+        <div class="marks-card">
+          <div class="marks-header">
+            <h4>📊 Internal Marks: ${data.student_name || boundStudentName || 'Student'} (${data.roll_no || boundRollNo})</h4>
+          </div>
+          <table class="marks-table">
+            <thead>
+              <tr>
+                <th>Subject</th>
+                <th>Marks</th>
+                <th>Percentage</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+          <div class="marks-summary">
+            <span>Total: ${data.total_obtained} / ${data.total_max}</span>
+            <span>Overall: ${data.overall_percentage}%</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function showMsg(text, type) {
+      resultEl.style.display = "block";
+      resultEl.className = "msg-box " + type;
+      resultEl.textContent = text;
+    }
+
+    function hideMsg() {
+      resultEl.style.display = "none";
+    }
+
+    // Initial check & auto-refresh session status and device status every 4 seconds
+    async function periodicRefresh() {
+      await fetchSession();
+      await checkDeviceStatus();
+    }
+
+    checkDeviceStatus();
+    fetchSession();
+    setInterval(periodicRefresh, 4000);
+  </script>
+</body>
+</html>
