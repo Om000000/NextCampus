@@ -1,0 +1,60 @@
+services:
+  # -------------------------------------------------------------
+  # 1. NextCampus Web Portal & Phone Presenty Server
+  # -------------------------------------------------------------
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nextcampus:latest
+    container_name: nextcampus-web
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./database:/app/database
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: ["web"]
+
+  # -------------------------------------------------------------
+  # 2. NextCampus Interactive Java Console (CLI Mode)
+  # Run with: docker compose run --rm console
+  # -------------------------------------------------------------
+  console:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nextcampus:latest
+    container_name: nextcampus-console
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./database:/app/database
+    command: ["console"]
+    profiles:
+      - cli
+
+  # -------------------------------------------------------------
+  # 3. NextCampus Desktop GUI via Web (In-Browser Swing UI)
+  # Run with: docker compose --profile desktop up desktop
+  # Access at: http://localhost:6080/vnc.html
+  # -------------------------------------------------------------
+  desktop:
+    build:
+      context: .
+      dockerfile: Dockerfile.desktop
+    image: nextcampus-desktop:latest
+    container_name: nextcampus-desktop
+    restart: unless-stopped
+    ports:
+      - "6080:6080"
+      - "5900:5900"
+    volumes:
+      - ./database:/app/database
+    environment:
+      - SCREEN_WIDTH=1366
+      - SCREEN_HEIGHT=768
+    shm_size: 512m
+    profiles:
+      - desktop

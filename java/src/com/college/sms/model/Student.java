@@ -21,6 +21,16 @@ public class Student {
         this.phone = phone;
     }
 
+    public Student(int studentId, String rollNo, String fullName, String course, int semester, String email, String phone) {
+        this.studentId = studentId;
+        this.rollNo = rollNo;
+        this.fullName = fullName;
+        this.course = course;
+        this.semester = semester;
+        this.email = email;
+        this.phone = phone;
+    }
+
     public int getStudentId() {
         return studentId;
     }

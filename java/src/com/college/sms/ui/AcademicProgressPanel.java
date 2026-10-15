@@ -2,6 +2,7 @@ package com.college.sms.ui;
 
 import com.college.sms.dao.AcademicStatsDAO;
 import com.college.sms.model.AcademicStats;
+import com.college.sms.util.Theme;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -70,7 +71,7 @@ public class AcademicProgressPanel extends JPanel {
             }
         };
         table = new JTable(model);
-        table.setRowHeight(24);
+        Theme.styleTable(table);
         table.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting() && table.getSelectedRow() >= 0) {
                 loadSelectedRowToEditor();

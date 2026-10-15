@@ -124,6 +124,27 @@ public class StudentDAO {
         return list;
     }
 
+    // Convenience aliases
+    public List<Student> getAllStudents() {
+        return getAll();
+    }
+
+    public Student getStudentById(int studentId) {
+        return findById(studentId);
+    }
+
+    public Student getStudentByRollNo(String rollNo) {
+        return findByRollNo(rollNo);
+    }
+
+    public List<Student> searchByName(String name) {
+        return findByName(name);
+    }
+
+    public boolean addStudent(Student s) {
+        return add(s);
+    }
+
     private Student mapRow(ResultSet rs) throws SQLException {
         Student s = new Student();
         s.setStudentId(rs.getInt("student_id"));

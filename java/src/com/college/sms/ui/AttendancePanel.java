@@ -2,6 +2,7 @@ package com.college.sms.ui;
 
 import com.college.sms.dao.AttendanceDAO;
 import com.college.sms.model.Attendance;
+import com.college.sms.util.Theme;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -40,7 +41,9 @@ public class AttendancePanel extends JPanel {
                 return false;
             }
         };
-        add(new JScrollPane(new JTable(model)), BorderLayout.CENTER);
+        JTable table = new JTable(model);
+        Theme.styleTable(table);
+        add(new JScrollPane(table), BorderLayout.CENTER);
 
         txtDate.setText(LocalDate.now().toString());
 

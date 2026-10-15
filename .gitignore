@@ -21,3 +21,6 @@ python/*.png
 .vscode/
 .DS_Store
 Thumbs.db
+
+# JDK (Added trailing slash to completely ignore the folder and its contents)
+jdk/

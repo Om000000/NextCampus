@@ -5,6 +5,7 @@ import com.college.sms.dao.PresentyDAO;
 import com.college.sms.model.AttendanceSession;
 import com.college.sms.model.PhonePresenty;
 import com.college.sms.util.BluetoothHash;
+import com.college.sms.util.Theme;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -94,11 +95,11 @@ public class BluetoothPresentyPanel extends JPanel {
         formNotice.add(btnUpdateNotice);
 
         lblHash.setFont(new Font("Monospaced", Font.BOLD, 44));
-        lblHash.setForeground(new Color(20, 110, 50));
+        lblHash.setForeground(Theme.ACCENT_EMERALD);
         lblSession.setFont(new Font("SansSerif", Font.BOLD, 15));
 
         lblPhoneUrl.setFont(new Font("SansSerif", Font.BOLD, 15));
-        lblPhoneUrl.setForeground(new Color(15, 80, 160));
+        lblPhoneUrl.setForeground(Theme.ACCENT_CYAN);
         lblPhoneUrl.setText("📱 Phone URL: http://" + localIp + ":5000  (Connect phone to same Wi-Fi)");
 
         top.add(form);
@@ -125,7 +126,9 @@ public class BluetoothPresentyPanel extends JPanel {
                 return false;
             }
         };
-        add(new JScrollPane(new JTable(model)), BorderLayout.CENTER);
+        JTable table = new JTable(model);
+        Theme.styleTable(table);
+        add(new JScrollPane(table), BorderLayout.CENTER);
 
         btnStart.addActionListener(e -> startSession());
         btnStop.addActionListener(e -> stopSession());

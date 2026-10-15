@@ -2,6 +2,7 @@ package com.college.sms.ui;
 
 import com.college.sms.dao.MarksDAO;
 import com.college.sms.model.Marks;
+import com.college.sms.util.Theme;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -39,7 +40,9 @@ public class MarksPanel extends JPanel {
                 return false;
             }
         };
-        add(new JScrollPane(new JTable(model)), BorderLayout.CENTER);
+        JTable table = new JTable(model);
+        Theme.styleTable(table);
+        add(new JScrollPane(table), BorderLayout.CENTER);
 
         txtMax.setText("100");
         txtExam.setText("Internal");

@@ -65,6 +65,80 @@ def init_db():
                 FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE
             )
         """)
+        con.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT NOT NULL UNIQUE,
+                password TEXT NOT NULL,
+                role TEXT NOT NULL,
+                full_name TEXT NOT NULL,
+                email TEXT,
+                student_id INTEGER,
+                created_at TEXT DEFAULT (datetime('now')),
+                FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE SET NULL
+            )
+        """)
+        con.execute("""
+            CREATE TABLE IF NOT EXISTS books (
+                book_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                isbn TEXT UNIQUE,
+                title TEXT NOT NULL,
+                author TEXT NOT NULL,
+                category TEXT NOT NULL,
+                total_copies INTEGER NOT NULL DEFAULT 1,
+                available_copies INTEGER NOT NULL DEFAULT 1,
+                shelf_location TEXT DEFAULT 'Section A1',
+                created_at TEXT DEFAULT (datetime('now'))
+            )
+        """)
+        con.execute("""
+            CREATE TABLE IF NOT EXISTS book_issues (
+                issue_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                book_id INTEGER NOT NULL,
+                student_id INTEGER NOT NULL,
+                roll_no TEXT NOT NULL,
+                issue_date TEXT NOT NULL,
+                due_date TEXT NOT NULL,
+                return_date TEXT,
+                fine_amount REAL DEFAULT 0.0,
+                status TEXT NOT NULL DEFAULT 'ISSUED',
+                remarks TEXT,
+                FOREIGN KEY (book_id) REFERENCES books(book_id) ON DELETE CASCADE,
+                FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE
+            )
+        """)
+        con.execute("""
+            CREATE TABLE IF NOT EXISTS internal_exams (
+                exam_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                exam_name TEXT NOT NULL,
+                course TEXT NOT NULL DEFAULT 'BBA CA',
+                semester INTEGER NOT NULL DEFAULT 5,
+                subject_name TEXT NOT NULL,
+                exam_date TEXT NOT NULL,
+                start_time TEXT NOT NULL,
+                end_time TEXT NOT NULL,
+                room_no TEXT NOT NULL DEFAULT 'Exam Hall 101',
+                max_marks REAL NOT NULL DEFAULT 40,
+                status TEXT NOT NULL DEFAULT 'Upcoming',
+                created_at TEXT DEFAULT (datetime('now'))
+            )
+        """)
+        con.execute("""
+            CREATE TABLE IF NOT EXISTS exam_enrollments (
+                enrollment_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                exam_id INTEGER NOT NULL,
+                student_id INTEGER NOT NULL,
+                roll_no TEXT NOT NULL,
+                enrollment_date TEXT DEFAULT (datetime('now')),
+                form_status TEXT NOT NULL DEFAULT 'Pending',
+                seat_number TEXT,
+                hall_ticket_status TEXT DEFAULT 'Generated',
+                remarks TEXT,
+                UNIQUE(exam_id, student_id),
+                FOREIGN KEY (exam_id) REFERENCES internal_exams(exam_id) ON DELETE CASCADE,
+                FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE
+            )
+        """)
         con.commit()
         con.close()
     except Exception as e:
@@ -500,6 +574,414 @@ def api_presenty():
             "ok": False,
             "message": f"Presenty already marked for {roll} in this session.",
         }), 400
+    finally:
+        con.close()
+
+
+# ======================================================================
+# ROLE-BASED AUTHENTICATION APIs
+# ======================================================================
+
+@app.post("/api/auth/login")
+def api_auth_login():
+    data = request.get_json(silent=True) or {}
+    username = (data.get("username") or "").strip()
+    password = (data.get("password") or "").strip()
+
+    if not username or not password:
+        return jsonify({"ok": False, "message": "Username and password are required."}), 400
+
+    con = db()
+    try:
+        user = con.execute(
+            "SELECT user_id, username, role, full_name, email, student_id FROM users WHERE lower(trim(username))=lower(trim(?)) AND password=?",
+            (username, password)
+        ).fetchone()
+
+        if not user:
+            return jsonify({"ok": False, "message": "Invalid username or password."}), 401
+
+        student_data = None
+        sid = user["student_id"]
+        if sid:
+            s_row = con.execute("SELECT * FROM students WHERE student_id=?", (sid,)).fetchone()
+            if s_row:
+                student_data = dict(s_row)
+        else:
+            # Check if username itself is a student roll number
+            s_row = con.execute("SELECT * FROM students WHERE upper(trim(roll_no))=upper(trim(?))", (username,)).fetchone()
+            if s_row:
+                student_data = dict(s_row)
+
+        return jsonify({
+            "ok": True,
+            "user": {
+                "user_id": user["user_id"],
+                "username": user["username"],
+                "role": user["role"],
+                "full_name": user["full_name"],
+                "email": user["email"],
+                "student_id": user["student_id"]
+            },
+            "student": student_data
+        })
+    finally:
+        con.close()
+
+
+@app.get("/api/auth/users")
+def api_auth_users():
+    con = db()
+    try:
+        rows = con.execute("SELECT user_id, username, role, full_name, email, student_id FROM users ORDER BY role, username").fetchall()
+        return jsonify({"ok": True, "users": [dict(r) for r in rows]})
+    finally:
+        con.close()
+
+
+# ======================================================================
+# LIBRARY MANAGEMENT APIs
+# ======================================================================
+
+@app.get("/api/library/books")
+def api_library_books():
+    q = (request.args.get("q") or "").strip().lower()
+    con = db()
+    try:
+        if q:
+            rows = con.execute(
+                """
+                SELECT * FROM books 
+                WHERE lower(title) LIKE ? OR lower(author) LIKE ? OR lower(category) LIKE ? OR lower(isbn) LIKE ?
+                ORDER BY title ASC
+                """,
+                (f"%{q}%", f"%{q}%", f"%{q}%", f"%{q}%")
+            ).fetchall()
+        else:
+            rows = con.execute("SELECT * FROM books ORDER BY title ASC").fetchall()
+        return jsonify({"ok": True, "books": [dict(r) for r in rows]})
+    finally:
+        con.close()
+
+
+@app.get("/api/library/my-books")
+def api_library_my_books():
+    roll = (request.args.get("roll_no") or "").strip().upper()
+    if not roll:
+        return jsonify({"ok": False, "message": "Roll number is required."}), 400
+    con = db()
+    try:
+        rows = con.execute(
+            """
+            SELECT bi.*, b.title as book_title, b.author, b.shelf_location, s.full_name as student_name
+            FROM book_issues bi
+            JOIN books b ON bi.book_id = b.book_id
+            JOIN students s ON bi.student_id = s.student_id
+            WHERE upper(trim(bi.roll_no)) = ?
+            ORDER BY bi.issue_id DESC
+            """,
+            (roll,)
+        ).fetchall()
+        today = datetime.now().strftime("%Y-%m-%d")
+        issues_list = []
+        for r in rows:
+            d = dict(r)
+            # Calculate late fine if overdue
+            due = d.get("due_date") or ""
+            ret = d.get("return_date") or today
+            fine = d.get("fine_amount") or 0.0
+            if d.get("status") != "RETURNED" and due and ret > due:
+                try:
+                    d1 = datetime.strptime(due, "%Y-%m-%d")
+                    d2 = datetime.strptime(ret, "%Y-%m-%d")
+                    days = max(0, (d2 - d1).days)
+                    fine = days * 5.0
+                except Exception:
+                    pass
+            d["computed_fine"] = fine
+            issues_list.append(d)
+        return jsonify({"ok": True, "issues": issues_list})
+    finally:
+        con.close()
+
+
+@app.post("/api/library/issue")
+def api_library_issue():
+    data = request.get_json(silent=True) or {}
+    book_id = data.get("book_id")
+    roll = (data.get("roll_no") or "").strip().upper()
+    due_days = int(data.get("due_days") or 14)
+
+    if not book_id or not roll:
+        return jsonify({"ok": False, "message": "Book ID and Student Roll Number are required."}), 400
+
+    con = db()
+    try:
+        book = con.execute("SELECT * FROM books WHERE book_id=?", (book_id,)).fetchone()
+        if not book or book["available_copies"] <= 0:
+            return jsonify({"ok": False, "message": "Book is unavailable or out of stock."}), 400
+
+        student = con.execute("SELECT * FROM students WHERE upper(trim(roll_no))=?", (roll,)).fetchone()
+        if not student:
+            return jsonify({"ok": False, "message": f"Student with roll number {roll} not found."}), 404
+
+        today = datetime.now().strftime("%Y-%m-%d")
+        due = (datetime.now().timestamp() + (due_days * 86400))
+        due_str = datetime.fromtimestamp(due).strftime("%Y-%m-%d")
+
+        con.execute(
+            """
+            INSERT INTO book_issues (book_id, student_id, roll_no, issue_date, due_date, status, remarks)
+            VALUES (?, ?, ?, ?, ?, 'ISSUED', 'Issued via Web Portal')
+            """,
+            (book_id, student["student_id"], student["roll_no"], today, due_str)
+        )
+        con.execute("UPDATE books SET available_copies = available_copies - 1 WHERE book_id = ?", (book_id,))
+        con.commit()
+        return jsonify({"ok": True, "message": f"Book issued to {student['full_name']}! Due date: {due_str}."})
+    finally:
+        con.close()
+
+
+@app.post("/api/library/return")
+def api_library_return():
+    data = request.get_json(silent=True) or {}
+    issue_id = data.get("issue_id")
+    fine = float(data.get("fine_amount") or 0.0)
+
+    if not issue_id:
+        return jsonify({"ok": False, "message": "Issue ID is required."}), 400
+
+    con = db()
+    try:
+        issue = con.execute("SELECT * FROM book_issues WHERE issue_id=?", (issue_id,)).fetchone()
+        if not issue or issue["status"] == "RETURNED":
+            return jsonify({"ok": False, "message": "Invalid issue record or already returned."}), 400
+
+        today = datetime.now().strftime("%Y-%m-%d")
+        con.execute(
+            "UPDATE book_issues SET return_date=?, fine_amount=?, status='RETURNED', remarks='Returned' WHERE issue_id=?",
+            (today, fine, issue_id)
+        )
+        con.execute("UPDATE books SET available_copies = available_copies + 1 WHERE book_id = ?", (issue["book_id"],))
+        con.commit()
+        return jsonify({"ok": True, "message": "Book marked as RETURNED and copies restored."})
+    finally:
+        con.close()
+
+
+# ======================================================================
+# INTERNAL EXAM & SEAT ALLOCATION APIs
+# ======================================================================
+
+@app.get("/api/exams")
+def api_exams():
+    sem = request.args.get("semester")
+    con = db()
+    try:
+        if sem:
+            rows = con.execute("SELECT * FROM internal_exams WHERE semester=? ORDER BY exam_date ASC, start_time ASC", (sem,)).fetchall()
+        else:
+            rows = con.execute("SELECT * FROM internal_exams ORDER BY exam_date ASC, start_time ASC").fetchall()
+        return jsonify({"ok": True, "exams": [dict(r) for r in rows]})
+    finally:
+        con.close()
+
+
+@app.get("/api/exam-status")
+def api_exam_status():
+    roll = (request.args.get("roll_no") or "").strip().upper()
+    if not roll:
+        return jsonify({"ok": False, "message": "Roll number is required."}), 400
+
+    con = db()
+    try:
+        student = con.execute("SELECT * FROM students WHERE upper(trim(roll_no))=?", (roll,)).fetchone()
+        if not student:
+            return jsonify({"ok": False, "message": f"Student with roll number {roll} not found."}), 404
+
+        rows = con.execute(
+            """
+            SELECT ee.*, ie.exam_name, ie.subject_name, ie.exam_date, ie.start_time, ie.end_time,
+                   ie.room_no, ie.max_marks, ie.status as exam_schedule_status
+            FROM exam_enrollments ee
+            JOIN internal_exams ie ON ee.exam_id = ie.exam_id
+            WHERE ee.student_id = ?
+            ORDER BY ie.exam_date ASC
+            """,
+            (student["student_id"],)
+        ).fetchall()
+
+        # Also get all upcoming exams for semester to see which ones are not yet enrolled
+        available_exams = con.execute(
+            "SELECT * FROM internal_exams WHERE semester=? ORDER BY exam_date ASC",
+            (student["semester"],)
+        ).fetchall()
+
+        enrolled_exam_ids = {r["exam_id"] for r in rows}
+        available_list = []
+        for ax in available_exams:
+            d = dict(ax)
+            d["is_enrolled"] = d["exam_id"] in enrolled_exam_ids
+            available_list.append(d)
+
+        allocated_seat = None
+        for r in rows:
+            if r["seat_number"]:
+                allocated_seat = r["seat_number"]
+                break
+
+        return jsonify({
+            "ok": True,
+            "student": dict(student),
+            "enrollments": [dict(r) for r in rows],
+            "available_exams": available_list,
+            "allocated_seat": allocated_seat
+        })
+    finally:
+        con.close()
+
+
+@app.post("/api/exam-enroll")
+def api_exam_enroll():
+    data = request.get_json(silent=True) or {}
+    roll = (data.get("roll_no") or "").strip().upper()
+    exam_id = data.get("exam_id")
+
+    if not roll or not exam_id:
+        return jsonify({"ok": False, "message": "Roll number and Exam ID are required."}), 400
+
+    con = db()
+    try:
+        student = con.execute("SELECT * FROM students WHERE upper(trim(roll_no))=?", (roll,)).fetchone()
+        if not student:
+            return jsonify({"ok": False, "message": f"Student with roll number {roll} not found."}), 404
+
+        exam = con.execute("SELECT * FROM internal_exams WHERE exam_id=?", (exam_id,)).fetchone()
+        if not exam:
+            return jsonify({"ok": False, "message": "Exam not found."}), 404
+
+        # Check existing enrollment
+        existing = con.execute("SELECT * FROM exam_enrollments WHERE exam_id=? AND student_id=?", (exam_id, student["student_id"])).fetchone()
+        if existing:
+            return jsonify({
+                "ok": True,
+                "message": f"Already enrolled! Form Status: {existing['form_status']}. Seat No: {existing['seat_number'] or 'Pending'}",
+                "status": existing["form_status"],
+                "seat_number": existing["seat_number"]
+            })
+
+        con.execute(
+            """
+            INSERT INTO exam_enrollments (exam_id, student_id, roll_no, enrollment_date, form_status, hall_ticket_status, remarks)
+            VALUES (?, ?, ?, datetime('now'), 'Pending', 'Not Generated', 'Self-enrolled via Student Portal')
+            """,
+            (exam_id, student["student_id"], student["roll_no"])
+        )
+        con.commit()
+        return jsonify({
+            "ok": True,
+            "message": f"Internal Exam Form successfully submitted for {exam['subject_name']}!\nStatus: PENDING APPROVAL.",
+            "status": "Pending"
+        })
+    finally:
+        con.close()
+
+
+@app.post("/api/exam-approve")
+def api_exam_approve():
+    data = request.get_json(silent=True) or {}
+    enrollment_id = data.get("enrollment_id")
+    form_status = (data.get("form_status") or "Approved").strip()
+    seat_number = (data.get("seat_number") or "").strip()
+    remarks = (data.get("remarks") or "Form verified and approved").strip()
+
+    if not enrollment_id:
+        return jsonify({"ok": False, "message": "Enrollment ID is required."}), 400
+
+    con = db()
+    try:
+        ht = "Generated" if form_status.lower() == "approved" else "Not Generated"
+        con.execute(
+            "UPDATE exam_enrollments SET form_status=?, seat_number=?, hall_ticket_status=?, remarks=? WHERE enrollment_id=?",
+            (form_status, seat_number or None, ht, remarks, enrollment_id)
+        )
+        con.commit()
+        return jsonify({"ok": True, "message": f"Exam Form updated to {form_status}! Seat: {seat_number or 'N/A'}."})
+    finally:
+        con.close()
+
+
+@app.post("/api/exam-auto-allocate")
+def api_exam_auto_allocate():
+    data = request.get_json(silent=True) or {}
+    exam_id = data.get("exam_id")
+    prefix = (data.get("prefix") or "BBA5-S").strip()
+
+    if not exam_id:
+        return jsonify({"ok": False, "message": "Exam ID is required."}), 400
+
+    con = db()
+    try:
+        rows = con.execute(
+            "SELECT enrollment_id FROM exam_enrollments WHERE exam_id=? ORDER BY roll_no ASC",
+            (exam_id,)
+        ).fetchall()
+
+        seq = 101
+        for r in rows:
+            seat = f"{prefix}{seq}"
+            con.execute(
+                "UPDATE exam_enrollments SET seat_number=?, form_status='Approved', hall_ticket_status='Generated', remarks='Seat Allocated' WHERE enrollment_id=?",
+                (seat, r["enrollment_id"])
+            )
+            seq += 1
+
+        con.commit()
+        return jsonify({"ok": True, "message": f"Successfully allocated sequential seat numbers to {len(rows)} students!"})
+    finally:
+        con.close()
+
+
+@app.get("/api/hall-ticket")
+def api_hall_ticket():
+    enrollment_id = request.args.get("enrollment_id")
+    roll = (request.args.get("roll_no") or "").strip().upper()
+
+    con = db()
+    try:
+        if enrollment_id:
+            ee = con.execute(
+                """
+                SELECT ee.*, ie.exam_name, ie.subject_name, ie.exam_date, ie.start_time, ie.end_time,
+                       ie.room_no, ie.max_marks, s.full_name, s.course, s.semester, s.email
+                FROM exam_enrollments ee
+                JOIN internal_exams ie ON ee.exam_id = ie.exam_id
+                JOIN students s ON ee.student_id = s.student_id
+                WHERE ee.enrollment_id = ?
+                """,
+                (enrollment_id,)
+            ).fetchone()
+        elif roll:
+            ee = con.execute(
+                """
+                SELECT ee.*, ie.exam_name, ie.subject_name, ie.exam_date, ie.start_time, ie.end_time,
+                       ie.room_no, ie.max_marks, s.full_name, s.course, s.semester, s.email
+                FROM exam_enrollments ee
+                JOIN internal_exams ie ON ee.exam_id = ie.exam_id
+                JOIN students s ON ee.student_id = s.student_id
+                WHERE upper(trim(ee.roll_no)) = ? AND ee.form_status = 'Approved'
+                ORDER BY ie.exam_date ASC LIMIT 1
+                """,
+                (roll,)
+            ).fetchone()
+        else:
+            return jsonify({"ok": False, "message": "enrollment_id or roll_no required."}), 400
+
+        if not ee:
+            return jsonify({"ok": False, "message": "Approved hall ticket record not found."}), 404
+
+        return jsonify({"ok": True, "hall_ticket": dict(ee)})
     finally:
         con.close()
 

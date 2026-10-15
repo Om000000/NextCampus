@@ -2,9 +2,11 @@ package com.college.sms.ui;
 
 import com.college.sms.dao.PresentyDAO;
 import com.college.sms.dao.TimetableDAO;
+import com.college.sms.dao.UserDAO;
 import com.college.sms.model.AttendanceSession;
 import com.college.sms.model.LectureAttendance;
 import com.college.sms.model.TimetableSlot;
+import com.college.sms.util.Theme;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -40,6 +42,7 @@ public class TimetablePresentyPanel extends JPanel {
 
     private final TimetableDAO timetableDao = new TimetableDAO();
     private final PresentyDAO presentyDao = new PresentyDAO();
+    private final UserDAO userDAO = new UserDAO();
 
     // Date & Day controls
     private LocalDate selectedDate = LocalDate.now();
@@ -107,8 +110,7 @@ public class TimetablePresentyPanel extends JPanel {
             }
         };
         tableTimetable = new JTable(modelTimetable);
-        tableTimetable.setRowHeight(24);
-        tableTimetable.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 12));
+        Theme.styleTable(tableTimetable);
         tableTimetable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting() && tableTimetable.getSelectedRow() >= 0) {
                 onLectureSelected();
@@ -124,9 +126,7 @@ public class TimetablePresentyPanel extends JPanel {
         JButton btnEditSlot = new JButton("✏ Edit Slot");
         JButton btnDeleteSlot = new JButton("🗑 Delete Slot");
         JButton btnStartPresenty = new JButton("🚀 Start Phone Presenty for Lecture");
-        btnStartPresenty.setBackground(new Color(30, 130, 60));
-        btnStartPresenty.setForeground(Color.WHITE);
-        btnStartPresenty.setOpaque(true);
+        Theme.stylePrimaryButton(btnStartPresenty);
 
         pnlTtButtons.add(btnAddSlot);
         pnlTtButtons.add(btnEditSlot);
@@ -143,8 +143,7 @@ public class TimetablePresentyPanel extends JPanel {
             }
         };
         tableAttendance = new JTable(modelAttendance);
-        tableAttendance.setRowHeight(24);
-        tableAttendance.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 12));
+        Theme.styleTable(tableAttendance);
         tableAttendance.setDefaultRenderer(Object.class, new StatusCellRenderer());
 
         JPanel pnlRoster = new JPanel(new BorderLayout(4, 4));
@@ -152,8 +151,9 @@ public class TimetablePresentyPanel extends JPanel {
 
         JPanel pnlRosterHeader = new JPanel(new BorderLayout(4, 4));
         lblSelectedLecture.setFont(new Font("SansSerif", Font.BOLD, 13));
-        lblSelectedLecture.setForeground(new Color(20, 90, 50));
+        lblSelectedLecture.setForeground(Theme.ACCENT_EMERALD);
         lblSummaryStats.setFont(new Font("SansSerif", Font.BOLD, 13));
+        lblSummaryStats.setForeground(Theme.ACCENT_CYAN);
         pnlRosterHeader.add(lblSelectedLecture, BorderLayout.WEST);
         pnlRosterHeader.add(lblSummaryStats, BorderLayout.EAST);
         pnlRoster.add(pnlRosterHeader, BorderLayout.NORTH);
@@ -401,7 +401,11 @@ public class TimetablePresentyPanel extends JPanel {
         JTextField txtStart = new JTextField("09:00 AM");
         JTextField txtEnd = new JTextField("10:00 AM");
         JTextField txtSubject = new JTextField("Java Programming");
-        JTextField txtTeacher = new JTextField("Prof. Sharma");
+
+        // Only registered teachers from the software users table
+        List<String> teacherList = userDAO.getTeacherNames();
+        JComboBox<String> cmbTeacher = new JComboBox<>(teacherList.toArray(new String[0]));
+
         JTextField txtRoom = new JTextField("Room 302");
         JComboBox<String> cmbType = new JComboBox<>(new String[]{"Theory", "Practical"});
 
@@ -411,7 +415,7 @@ public class TimetablePresentyPanel extends JPanel {
         form.add(new JLabel("Start Time:")); form.add(txtStart);
         form.add(new JLabel("End Time:")); form.add(txtEnd);
         form.add(new JLabel("Subject:")); form.add(txtSubject);
-        form.add(new JLabel("Teacher:")); form.add(txtTeacher);
+        form.add(new JLabel("Teacher (Registered):")); form.add(cmbTeacher);
         form.add(new JLabel("Room / Lab:")); form.add(txtRoom);
         form.add(new JLabel("Type:")); form.add(cmbType);
 
@@ -424,7 +428,7 @@ public class TimetablePresentyPanel extends JPanel {
                         txtStart.getText().trim(),
                         txtEnd.getText().trim(),
                         txtSubject.getText().trim(),
-                        txtTeacher.getText().trim(),
+                        String.valueOf(cmbTeacher.getSelectedItem()),
                         txtRoom.getText().trim(),
                         String.valueOf(cmbType.getSelectedItem())
                 );
@@ -449,7 +453,14 @@ public class TimetablePresentyPanel extends JPanel {
         JTextField txtStart = new JTextField(selectedSlot.getStartTime());
         JTextField txtEnd = new JTextField(selectedSlot.getEndTime());
         JTextField txtSubject = new JTextField(selectedSlot.getSubjectName());
-        JTextField txtTeacher = new JTextField(selectedSlot.getTeacherName());
+
+        // Only registered teachers from the software users table
+        List<String> teacherList = userDAO.getTeacherNames();
+        JComboBox<String> cmbTeacher = new JComboBox<>(teacherList.toArray(new String[0]));
+        if (selectedSlot.getTeacherName() != null) {
+            cmbTeacher.setSelectedItem(selectedSlot.getTeacherName());
+        }
+
         JTextField txtRoom = new JTextField(selectedSlot.getRoomNo());
         JComboBox<String> cmbType = new JComboBox<>(new String[]{"Theory", "Practical"});
         cmbType.setSelectedItem(selectedSlot.getLectureType());
@@ -460,7 +471,7 @@ public class TimetablePresentyPanel extends JPanel {
         form.add(new JLabel("Start Time:")); form.add(txtStart);
         form.add(new JLabel("End Time:")); form.add(txtEnd);
         form.add(new JLabel("Subject:")); form.add(txtSubject);
-        form.add(new JLabel("Teacher:")); form.add(txtTeacher);
+        form.add(new JLabel("Teacher (Registered):")); form.add(cmbTeacher);
         form.add(new JLabel("Room / Lab:")); form.add(txtRoom);
         form.add(new JLabel("Type:")); form.add(cmbType);
 
@@ -472,7 +483,7 @@ public class TimetablePresentyPanel extends JPanel {
                 selectedSlot.setStartTime(txtStart.getText().trim());
                 selectedSlot.setEndTime(txtEnd.getText().trim());
                 selectedSlot.setSubjectName(txtSubject.getText().trim());
-                selectedSlot.setTeacherName(txtTeacher.getText().trim());
+                selectedSlot.setTeacherName(String.valueOf(cmbTeacher.getSelectedItem()));
                 selectedSlot.setRoomNo(txtRoom.getText().trim());
                 selectedSlot.setLectureType(String.valueOf(cmbType.getSelectedItem()));
 
@@ -531,22 +542,25 @@ public class TimetablePresentyPanel extends JPanel {
         public Component getTableCellRendererComponent(JTable table, Object value,
                                                        boolean isSelected, boolean hasFocus, int row, int column) {
             Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            if (!isSelected) {
+                c.setBackground(Theme.CARD_BG);
+            }
             if (column == 3 && value != null) {
                 String status = value.toString();
                 if ("Present".equalsIgnoreCase(status)) {
-                    c.setForeground(new Color(15, 120, 45));
+                    c.setForeground(new Color(52, 211, 153)); // Soft emerald
                     setFont(getFont().deriveFont(Font.BOLD));
                 } else if ("Absent".equalsIgnoreCase(status)) {
-                    c.setForeground(new Color(185, 30, 30));
+                    c.setForeground(new Color(248, 113, 113)); // Soft red
                     setFont(getFont().deriveFont(Font.BOLD));
                 } else if ("Late".equalsIgnoreCase(status)) {
-                    c.setForeground(new Color(190, 100, 10));
+                    c.setForeground(new Color(251, 191, 36)); // Warm amber
                     setFont(getFont().deriveFont(Font.BOLD));
                 } else {
-                    c.setForeground(Color.BLACK);
+                    c.setForeground(isSelected ? Color.WHITE : Theme.TEXT_MAIN);
                 }
             } else {
-                c.setForeground(Color.BLACK);
+                c.setForeground(isSelected ? Color.WHITE : Theme.TEXT_MAIN);
             }
             return c;
         }

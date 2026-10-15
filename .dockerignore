@@ -1,0 +1,29 @@
+# Git and VCS
+.git/
+.gitignore
+
+# IDE & Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+ENV/
+
+# Java build artifacts
+java/out/
+*.class
+
+# Logs and temporary files
+*.log
+.system_generated/
+scratch/

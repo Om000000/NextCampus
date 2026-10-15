@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Student Attendance &amp; Academic Portal</title>
+  <title>NextCampus – College Student Portal</title>
+  <link rel="icon" type="image/png" href="/static/icon.png" />
   <style>
     :root {
       --primary: #107c41;
@@ -41,7 +42,7 @@
 
     .container {
       width: 100%;
-      max-width: 480px;
+      max-width: 580px;
       margin: auto;
     }
 
@@ -74,6 +75,7 @@
     /* Tab switcher */
     .tab-nav {
       display: flex;
+      flex-wrap: wrap;
       background: #f0f4f2;
       border-radius: 12px;
       padding: 4px;
@@ -82,12 +84,13 @@
     }
 
     .tab-btn {
-      flex: 1;
-      padding: 10px 8px;
+      flex: 1 1 auto;
+      min-width: 90px;
+      padding: 9px 8px;
       border: none;
       background: transparent;
       border-radius: 9px;
-      font-size: 0.88rem;
+      font-size: 0.82rem;
       font-weight: 700;
       color: var(--text-muted);
       cursor: pointer;
@@ -95,13 +98,56 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 4px;
+      text-align: center;
     }
 
     .tab-btn.active {
       background: #ffffff;
       color: var(--primary);
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    /* Helper styles for exams, library, and portal */
+    .btn-secondary {
+      background: #f0f4f2;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover {
+      background: #e2ece6;
+    }
+    .btn-sm {
+      padding: 6px 10px;
+      font-size: 0.8rem;
+    }
+    .badge-seat {
+      background: #e8f0fe;
+      color: #1a73e8;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid #c2d7fa;
+      display: inline-block;
+      font-size: 0.95rem;
+    }
+    .badge-approved { background: #e6f4ea; color: #137333; font-weight: 700; padding: 3px 8px; border-radius: 5px; font-size: 0.78rem; }
+    .badge-pending { background: #fef7e0; color: #b06000; font-weight: 700; padding: 3px 8px; border-radius: 5px; font-size: 0.78rem; }
+    .hall-ticket-slip {
+      background: #fff;
+      border: 2px dashed #107c41;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 14px;
+      line-height: 1.5;
+      font-size: 0.85rem;
+    }
+    .item-card {
+      background: #fbfdfc;
+      border: 1px solid #dbe6e0;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
     }
 
     /* Teacher's Notice Banner */
@@ -494,9 +540,12 @@
 </head>
 <body>
   <div class="container">
-    <div class="brand">
-      <h2>College Student Portal</h2>
-      <p>TY BBA CA – Semester 5</p>
+    <div class="brand" style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <img src="/static/icon.png" alt="NextCampus" style="width: 44px; height: 44px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.35); object-fit: cover;" onerror="this.style.display='none'" />
+        <h2 style="font-size: 1.6rem; letter-spacing: -0.02em; font-weight: 800; color: #ffffff;">NextCampus</h2>
+      </div>
+      <p style="color: #a7f3d0; font-size: 0.88rem; font-weight: 500;">College Student Management System – TY BBA (CA) Sem 5</p>
     </div>
 
     <div class="card">
@@ -512,10 +561,19 @@
       <!-- Tab Navigation -->
       <div class="tab-nav">
         <button class="tab-btn active" id="tabPresenty" type="button" onclick="switchTab('presenty')">
-          ✔ Mark Attendance
+          ✔ Attendance
         </button>
         <button class="tab-btn" id="tabMarks" type="button" onclick="switchTab('marks')">
-          📊 Progress &amp; Marks
+          📊 Marks
+        </button>
+        <button class="tab-btn" id="tabExams" type="button" onclick="switchTab('exams')">
+          🎓 Exam &amp; Seat No
+        </button>
+        <button class="tab-btn" id="tabLibrary" type="button" onclick="switchTab('library')">
+          📚 Library
+        </button>
+        <button class="tab-btn" id="tabPortal" type="button" onclick="switchTab('portal')">
+          🔑 Role Portal
         </button>
       </div>
 
@@ -622,6 +680,109 @@
         <div class="msg-box" id="marksMsg" style="display: none;"></div>
         <div id="statsResult"></div>
         <div id="marksResult"></div>
+      </div>
+
+      <!-- TAB 3: EXAM FORM STATUS & SEAT ALLOCATION -->
+      <div id="viewExams" style="display: none;">
+        <form id="examFormCheck" onsubmit="event.preventDefault(); loadExamStatus();">
+          <div class="form-group">
+            <label for="examRoll">Student Roll Number</label>
+            <input
+              id="examRoll"
+              type="text"
+              placeholder="e.g. 18 or BBA001"
+              autocomplete="off"
+              autocapitalize="characters"
+              required
+            />
+            <div class="help-hint">
+              Check internal exam enrollment, form approval status, and allocated seat numbers.
+            </div>
+          </div>
+          <button class="btn btn-primary" type="submit" id="btnCheckExams">
+            🔍 Check Exam Status &amp; Seat No
+          </button>
+        </form>
+
+        <div class="msg-box" id="examMsg" style="display: none;"></div>
+        <div id="examResult" style="margin-top: 14px;"></div>
+      </div>
+
+      <!-- TAB 4: LIBRARY MANAGEMENT -->
+      <div id="viewLibrary" style="display: none;">
+        <div style="display: flex; gap: 8px; margin-bottom: 14px;">
+          <button type="button" class="btn btn-secondary btn-sm" id="btnSubMyBooks" style="flex: 1;" onclick="switchLibrarySub('mybooks')">📖 My Borrowed Books</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="btnSubCatalog" style="flex: 1;" onclick="switchLibrarySub('catalog')">🔍 Search Books</button>
+        </div>
+
+        <div id="subViewMyBooks">
+          <form id="libraryRollForm" onsubmit="event.preventDefault(); loadMyBooks();">
+            <div class="form-group">
+              <label for="libRoll">Student Roll Number</label>
+              <input
+                id="libRoll"
+                type="text"
+                placeholder="e.g. 18 or BBA001"
+                autocomplete="off"
+                autocapitalize="characters"
+                required
+              />
+            </div>
+            <button class="btn btn-primary" type="submit" id="btnCheckLib">📖 Check Borrowed Books</button>
+          </form>
+          <div class="msg-box" id="libMsg" style="display: none;"></div>
+          <div id="myBooksResult" style="margin-top: 14px;"></div>
+        </div>
+
+        <div id="subViewCatalog" style="display: none;">
+          <div class="form-group">
+            <label for="libSearch">Search Catalog</label>
+            <input
+              id="libSearch"
+              type="text"
+              placeholder="Search title, author, category..."
+              oninput="loadCatalog()"
+            />
+          </div>
+          <button class="btn btn-primary" type="button" onclick="loadCatalog()">🔍 Search Catalog</button>
+          <div id="catalogResult" style="margin-top: 14px;"></div>
+        </div>
+      </div>
+
+      <!-- TAB 5: ROLE-BASED PORTAL ACCESS -->
+      <div id="viewPortal" style="display: none;">
+        <div id="portalLoginForm">
+          <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 6px; color: var(--primary-dark);">
+            Role-Based Portal Access
+          </div>
+          <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 12px;">
+            Quick viva demonstration logins:
+          </p>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 14px;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickLogin('admin', 'admin123')">👑 HOD / Admin</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickLogin('teacher', 'teacher123')">👨‍🏫 Teacher</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickLogin('librarian', 'library123')">📚 Librarian</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickLogin('BBA001', 'bba001')">🎓 Student (Aarav)</button>
+          </div>
+          <form onsubmit="event.preventDefault(); submitRoleLogin();">
+            <div class="form-group">
+              <label for="portalUser">Username / Roll No</label>
+              <input id="portalUser" type="text" placeholder="Username" required />
+            </div>
+            <div class="form-group">
+              <label for="portalPass">Password</label>
+              <input id="portalPass" type="password" placeholder="Password" required />
+            </div>
+            <button class="btn btn-primary" type="submit" id="btnPortalLogin">Sign In ➔</button>
+          </form>
+          <div class="msg-box" id="portalLoginMsg" style="display: none;"></div>
+        </div>
+
+        <div id="portalDashboard" style="display: none;">
+          <div id="portalUserHeader" style="background: #eef7f2; padding: 12px; border-radius: 10px; margin-bottom: 14px; border: 1px solid #c2e2ce;"></div>
+          <div id="portalActions"></div>
+          <button type="button" class="btn btn-secondary" style="margin-top: 14px; width: 100%;" onclick="logoutPortal()">🚪 Sign Out / Switch User</button>
+        </div>
       </div>
     </div>
 
@@ -754,19 +915,429 @@
     rollInput.addEventListener("input", (e) => { e.target.value = e.target.value.toUpperCase(); });
     hashInput.addEventListener("input", (e) => { e.target.value = e.target.value.toUpperCase(); });
     marksRollInput.addEventListener("input", (e) => { e.target.value = e.target.value.toUpperCase(); });
+    const examRollInput = document.getElementById("examRoll");
+    if (examRollInput) examRollInput.addEventListener("input", (e) => { e.target.value = e.target.value.toUpperCase(); });
+    const libRollInput = document.getElementById("libRoll");
+    if (libRollInput) libRollInput.addEventListener("input", (e) => { e.target.value = e.target.value.toUpperCase(); });
 
     // --- Tab Switcher ---
     function switchTab(tab) {
-      document.getElementById("tabPresenty").className = "tab-btn " + (tab === 'presenty' ? 'active' : '');
-      document.getElementById("tabMarks").className = "tab-btn " + (tab === 'marks' ? 'active' : '');
-      document.getElementById("viewPresenty").style.display = (tab === 'presenty' ? 'block' : 'none');
-      document.getElementById("viewMarks").style.display = (tab === 'marks' ? 'block' : 'none');
+      const tabs = ['presenty', 'marks', 'exams', 'library', 'portal'];
+      tabs.forEach(t => {
+        const btn = document.getElementById("tab" + t.charAt(0).toUpperCase() + t.slice(1));
+        const view = document.getElementById("view" + t.charAt(0).toUpperCase() + t.slice(1));
+        if (btn) btn.className = "tab-btn " + (tab === t ? 'active' : '');
+        if (view) view.style.display = (tab === t ? 'block' : 'none');
+      });
       hideMsg();
 
       if (tab === 'marks' && boundRollNo && !marksRollInput.value) {
         marksRollInput.value = boundRollNo;
         loadStudentProgressAndMarks();
+      } else if (tab === 'exams') {
+        if (boundRollNo && examRollInput && !examRollInput.value) {
+          examRollInput.value = boundRollNo;
+        }
+        if (examRollInput && examRollInput.value) {
+          loadExamStatus();
+        }
+      } else if (tab === 'library') {
+        if (boundRollNo && libRollInput && !libRollInput.value) {
+          libRollInput.value = boundRollNo;
+        }
+        if (libRollInput && libRollInput.value) {
+          loadMyBooks();
+        }
       }
+    }
+
+    // =================================================================
+    // EXAM FORM STATUS, ENROLLMENT & SEAT ALLOCATION (WEB)
+    // =================================================================
+    async function loadExamStatus() {
+      const roll = (document.getElementById("examRoll").value || boundRollNo || "").trim().toUpperCase();
+      const msgEl = document.getElementById("examMsg");
+      const resEl = document.getElementById("examResult");
+      msgEl.style.display = "none";
+      resEl.innerHTML = "<div style='text-align:center; padding:12px; color:var(--text-muted);'>Checking exam enrollments & seat numbers…</div>";
+
+      if (!roll) {
+        msgEl.className = "msg-box error";
+        msgEl.textContent = "Please enter student roll number.";
+        msgEl.style.display = "block";
+        resEl.innerHTML = "";
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/exam-status?roll_no=${encodeURIComponent(roll)}`);
+        const data = await res.json();
+        if (!data.ok) {
+          msgEl.className = "msg-box error";
+          msgEl.textContent = data.message || "Could not retrieve exam details.";
+          msgEl.style.display = "block";
+          resEl.innerHTML = "";
+          return;
+        }
+
+        let seatHtml = "";
+        if (data.allocated_seat) {
+          seatHtml = `
+            <div style="background: #eef6ff; border: 1px solid #b8daff; border-radius: 12px; padding: 14px; margin-bottom: 14px; text-align: center;">
+              <div style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: #004085; letter-spacing: 0.04em;">Official Allocated Seat Number</div>
+              <div class="badge-seat" style="font-size: 1.35rem; margin: 8px 0;">⚡ ${data.allocated_seat}</div>
+              <div style="font-size: 0.82rem; color: #004085;">Eligibility verified &bull; Exam Form Approved</div>
+            </div>
+          `;
+        } else if (data.enrollments && data.enrollments.length > 0) {
+          seatHtml = `
+            <div style="background: #fff8e6; border: 1px solid #f6d89b; border-radius: 12px; padding: 12px; margin-bottom: 14px; text-align: center;">
+              <span class="badge-pending">⏳ Form Under Review</span>
+              <p style="font-size: 0.84rem; color: #855302; margin-top: 6px;">Your exam form is submitted. Seat number will be allocated once verified by HOD.</p>
+            </div>
+          `;
+        } else {
+          seatHtml = `
+            <div style="background: #f4f6f5; border: 1px solid #d2ded7; border-radius: 12px; padding: 12px; margin-bottom: 14px; text-align: center;">
+              <div style="font-weight: 700; font-size: 0.9rem; color: var(--text);">Not Enrolled Yet</div>
+              <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">Select an upcoming internal exam below to submit your enrollment form.</p>
+            </div>
+          `;
+        }
+
+        // Available / Upcoming exams
+        let examsHtml = "";
+        if (data.available_exams && data.available_exams.length > 0) {
+          examsHtml = `<div style="font-weight: 700; font-size: 0.92rem; margin-bottom: 10px; color: var(--primary-dark);">Upcoming Internal Exams (Semester ${data.student.semester}):</div>`;
+          data.available_exams.forEach(ex => {
+            const isEnrolled = ex.is_enrolled;
+            // find enrollment if any
+            const en = data.enrollments ? data.enrollments.find(e => e.exam_id === ex.exam_id) : null;
+            let statusBadge = "";
+            let btnAction = "";
+
+            if (en) {
+              if (en.form_status === 'Approved') {
+                statusBadge = `<span class="badge-approved">✔ Approved (${en.seat_number || 'Seat Pending'})</span>`;
+                btnAction = `<button type="button" class="btn btn-secondary btn-sm" onclick="viewDigitalHallTicket(${en.enrollment_id})">🎫 View Admit Card</button>`;
+              } else if (en.form_status === 'Rejected') {
+                statusBadge = `<span style="background:#fce8e6; color:#c5221f; font-weight:700; padding:2px 8px; border-radius:5px; font-size:0.78rem;">❌ Rejected: ${en.remarks || ''}</span>`;
+              } else {
+                statusBadge = `<span class="badge-pending">⏳ Pending Review</span>`;
+              }
+            } else {
+              statusBadge = `<span style="background:#eef0ef; color:#555; padding:2px 8px; border-radius:5px; font-size:0.78rem;">⚪ Not Enrolled</span>`;
+              btnAction = `<button type="button" class="btn btn-primary btn-sm" onclick="submitExamEnroll(${ex.exam_id}, '${ex.subject_name.replace(/'/g, "\\'")}')">📝 Submit Exam Form</button>`;
+            }
+
+            examsHtml += `
+              <div class="item-card">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                  <div>
+                    <strong style="font-size: 0.92rem; color: var(--text);">${ex.subject_name}</strong>
+                    <div style="font-size: 0.76rem; color: var(--text-muted);">${ex.exam_name}</div>
+                  </div>
+                  <div>${statusBadge}</div>
+                </div>
+                <div style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 8px;">
+                  📅 <strong>${ex.exam_date}</strong> &bull; ⏰ ${ex.start_time} - ${ex.end_time}<br/>
+                  📍 ${ex.room_no} &bull; Max: ${ex.max_marks} Marks
+                </div>
+                ${btnAction ? `<div style="text-align: right;">${btnAction}</div>` : ''}
+              </div>
+            `;
+          });
+        }
+
+        resEl.innerHTML = `
+          <div style="background: #f0f7f3; border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; font-size: 0.86rem;">
+            <strong>👤 ${data.student.full_name}</strong> &bull; Roll: <strong>${data.student.roll_no}</strong> &bull; ${data.student.course} Sem ${data.student.semester}
+          </div>
+          ${seatHtml}
+          ${examsHtml}
+          <div id="hallTicketDisplay"></div>
+        `;
+      } catch (e) {
+        msgEl.className = "msg-box error";
+        msgEl.textContent = "Error loading exam details. Check server connection.";
+        msgEl.style.display = "block";
+        resEl.innerHTML = "";
+      }
+    }
+
+    async function submitExamEnroll(examId, subjectName) {
+      const roll = (document.getElementById("examRoll").value || boundRollNo || "").trim().toUpperCase();
+      if (!confirm(`Submit Exam Form for ${subjectName} (Roll No: ${roll})?`)) return;
+
+      try {
+        const res = await fetch("/api/exam-enroll", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({roll_no: roll, exam_id: examId})
+        });
+        const d = await res.json();
+        alert(d.message || "Form submitted successfully!");
+        loadExamStatus();
+      } catch (e) {
+        alert("Failed to submit exam form: " + e);
+      }
+    }
+
+    async function viewDigitalHallTicket(enrollId) {
+      try {
+        const res = await fetch(`/api/hall-ticket?enrollment_id=${enrollId}`);
+        const d = await res.json();
+        if (!d.ok) {
+          alert(d.message || "Hall ticket not available.");
+          return;
+        }
+        const ht = d.hall_ticket;
+        const display = document.getElementById("hallTicketDisplay");
+        if (display) {
+          display.innerHTML = `
+            <div class="hall-ticket-slip">
+              <div style="text-align: center; border-bottom: 1px solid #107c41; padding-bottom: 8px; margin-bottom: 10px;">
+                <div style="font-weight: 800; font-size: 1rem; color: #107c41;">COLLEGE OF COMPUTER APPLICATIONS</div>
+                <div style="font-weight: 700; font-size: 0.82rem; text-transform: uppercase;">Internal Examination Admit Card / Hall Ticket</div>
+                <div style="font-size: 0.78rem; color: var(--text-muted);">${ht.course} &ndash; Semester ${ht.semester}</div>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px;">
+                <div><strong>Student:</strong> ${ht.full_name}</div>
+                <div><strong>Roll No:</strong> ${ht.roll_no}</div>
+                <div><strong>Subject:</strong> ${ht.subject_name}</div>
+                <div><strong>Exam Date:</strong> ${ht.exam_date}</div>
+                <div><strong>Time:</strong> ${ht.start_time} - ${ht.end_time}</div>
+                <div><strong>Exam Room:</strong> ${ht.room_no}</div>
+              </div>
+              <div style="background: #eef6ff; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 10px;">
+                <span style="font-size: 0.8rem; font-weight: 700; color: #004085;">ALLOCATED SEAT NUMBER:</span><br/>
+                <strong style="font-size: 1.4rem; color: #1a73e8;">${ht.seat_number || 'N/A'}</strong>
+              </div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.4;">
+                &bull; Candidate must occupy seat ${ht.seat_number} strictly 15 minutes before exam.<br/>
+                &bull; Bring College Identity Card along with this digital admit card.
+              </div>
+            </div>
+          `;
+          display.scrollIntoView({behavior: "smooth"});
+        }
+      } catch (e) {
+        alert("Could not load hall ticket: " + e);
+      }
+    }
+
+    // =================================================================
+    // LIBRARY MANAGEMENT (WEB)
+    // =================================================================
+    function switchLibrarySub(sub) {
+      document.getElementById("subViewMyBooks").style.display = (sub === 'mybooks' ? 'block' : 'none');
+      document.getElementById("subViewCatalog").style.display = (sub === 'catalog' ? 'block' : 'none');
+      document.getElementById("btnSubMyBooks").className = "btn btn-sm " + (sub === 'mybooks' ? 'btn-primary' : 'btn-secondary');
+      document.getElementById("btnSubCatalog").className = "btn btn-sm " + (sub === 'catalog' ? 'btn-primary' : 'btn-secondary');
+      if (sub === 'catalog') loadCatalog();
+    }
+
+    async function loadMyBooks() {
+      const roll = (document.getElementById("libRoll").value || boundRollNo || "").trim().toUpperCase();
+      const msgEl = document.getElementById("libMsg");
+      const resEl = document.getElementById("myBooksResult");
+      msgEl.style.display = "none";
+
+      if (!roll) {
+        msgEl.className = "msg-box error";
+        msgEl.textContent = "Please enter student roll number.";
+        msgEl.style.display = "block";
+        return;
+      }
+
+      resEl.innerHTML = "<div style='text-align:center; padding:12px; color:var(--text-muted);'>Checking borrowed library books…</div>";
+
+      try {
+        const res = await fetch(`/api/library/my-books?roll_no=${encodeURIComponent(roll)}`);
+        const data = await res.json();
+        if (!data.ok || !data.issues || data.issues.length === 0) {
+          resEl.innerHTML = `
+            <div class="item-card" style="text-align: center; color: var(--text-muted);">
+              No active or previous borrowed books found for Roll No <strong>${roll}</strong>.
+            </div>
+          `;
+          return;
+        }
+
+        let html = `<div style="font-weight: 700; font-size: 0.92rem; margin-bottom: 10px; color: var(--primary-dark);">Borrowed Books for Roll ${roll}:</div>`;
+        data.issues.forEach(i => {
+          const isRet = i.status === 'RETURNED';
+          const badge = isRet
+            ? `<span class="badge-approved">✔ Returned</span>`
+            : `<span class="badge-pending">📖 Issued (Due: ${i.due_date})</span>`;
+
+          html += `
+            <div class="item-card">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                <strong style="font-size: 0.9rem; color: var(--text);">${i.book_title}</strong>
+                <div>${badge}</div>
+              </div>
+              <div style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.4;">
+                Author: ${i.author || 'N/A'} &bull; Shelf: ${i.shelf_location || 'A1'}<br/>
+                Issued: <strong>${i.issue_date}</strong> &bull; Due: <strong>${i.due_date}</strong><br/>
+                ${i.computed_fine > 0 ? `<span style="color:#c5221f; font-weight:700;">⚠️ Overdue Fine: ₹${i.computed_fine}</span>` : `<span style="color:#137333;">No Overdue Fines</span>`}
+              </div>
+            </div>
+          `;
+        });
+        resEl.innerHTML = html;
+      } catch (e) {
+        msgEl.className = "msg-box error";
+        msgEl.textContent = "Failed to load library records.";
+        msgEl.style.display = "block";
+        resEl.innerHTML = "";
+      }
+    }
+
+    async function loadCatalog() {
+      const q = (document.getElementById("libSearch").value || "").trim();
+      const resEl = document.getElementById("catalogResult");
+      resEl.innerHTML = "<div style='text-align:center; padding:12px; color:var(--text-muted);'>Searching catalog…</div>";
+
+      try {
+        const res = await fetch(`/api/library/books?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        if (!data.ok || !data.books || data.books.length === 0) {
+          resEl.innerHTML = "<div class='item-card' style='text-align:center; color:var(--text-muted);'>No books found matching search.</div>";
+          return;
+        }
+
+        let html = `<div style="font-weight: 700; font-size: 0.88rem; margin-bottom: 8px; color: var(--text-muted);">${data.books.length} Books Found in Library Catalog:</div>`;
+        data.books.forEach(b => {
+          const availBadge = b.available_copies > 0
+            ? `<span style="background:#e6f4ea; color:#137333; font-weight:700; padding:2px 7px; border-radius:5px; font-size:0.75rem;">${b.available_copies} of ${b.total_copies} Available</span>`
+            : `<span style="background:#fce8e6; color:#c5221f; font-weight:700; padding:2px 7px; border-radius:5px; font-size:0.75rem;">Out of Stock</span>`;
+
+          html += `
+            <div class="item-card">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                <strong style="font-size: 0.92rem; color: var(--text);">${b.title}</strong>
+                <div>${availBadge}</div>
+              </div>
+              <div style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.4;">
+                Author: <strong>${b.author}</strong> &bull; Category: ${b.category}<br/>
+                Shelf Location: <strong>${b.shelf_location}</strong> &bull; ISBN: ${b.isbn || 'N/A'}
+              </div>
+            </div>
+          `;
+        });
+        resEl.innerHTML = html;
+      } catch (e) {
+        resEl.innerHTML = "<div class='msg-box error'>Failed to search library catalog.</div>";
+      }
+    }
+
+    // =================================================================
+    // ROLE-BASED PORTAL LOGIN & ACTIONS (WEB)
+    // =================================================================
+    let loggedInUser = null;
+
+    function setQuickLogin(u, p) {
+      document.getElementById("portalUser").value = u;
+      document.getElementById("portalPass").value = p;
+    }
+
+    async function submitRoleLogin() {
+      const u = document.getElementById("portalUser").value.trim();
+      const p = document.getElementById("portalPass").value.trim();
+      const msg = document.getElementById("portalLoginMsg");
+      msg.style.display = "none";
+
+      try {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({username: u, password: p})
+        });
+        const d = await res.json();
+        if (!d.ok) {
+          msg.className = "msg-box error";
+          msg.textContent = d.message || "Invalid credentials.";
+          msg.style.display = "block";
+          return;
+        }
+
+        loggedInUser = d.user;
+        renderPortalDashboard(d);
+      } catch (e) {
+        msg.className = "msg-box error";
+        msg.textContent = "Login request failed.";
+        msg.style.display = "block";
+      }
+    }
+
+    function renderPortalDashboard(loginData) {
+      document.getElementById("portalLoginForm").style.display = "none";
+      document.getElementById("portalDashboard").style.display = "block";
+
+      const u = loginData.user;
+      const roleBadge = `<span class="badge-seat" style="font-size:0.8rem; padding:2px 8px;">${u.role}</span>`;
+
+      document.getElementById("portalUserHeader").innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-weight:800; font-size:1rem; color:var(--primary-dark);">${u.full_name}</div>
+            <div style="font-size:0.82rem; color:var(--text-muted);">${u.email || u.username}</div>
+          </div>
+          <div>${roleBadge}</div>
+        </div>
+      `;
+
+      let actionsHtml = "";
+      if (u.role === 'HOD' || u.role === 'ADMIN') {
+        actionsHtml = `
+          <div style="font-weight:700; font-size:0.9rem; margin-bottom:8px; color:var(--text);">👑 HOD Control Center</div>
+          <div style="display:grid; grid-template-columns:1fr; gap:8px;">
+            <button class="btn btn-primary btn-sm" onclick="switchTab('exams')">🎓 Manage Exam Forms &amp; Seat Numbers</button>
+            <button class="btn btn-secondary btn-sm" onclick="switchTab('library')">📚 Library Management &amp; Issues</button>
+            <button class="btn btn-secondary btn-sm" onclick="switchTab('marks')">📊 View All Student Marks</button>
+            <button class="btn btn-secondary btn-sm" onclick="switchTab('presenty')">✔ View Attendance Session</button>
+          </div>
+        `;
+      } else if (u.role === 'TEACHER') {
+        actionsHtml = `
+          <div style="font-weight:700; font-size:0.9rem; margin-bottom:8px; color:var(--text);">👨‍🏫 Teacher Portal</div>
+          <div style="display:grid; grid-template-columns:1fr; gap:8px;">
+            <button class="btn btn-primary btn-sm" onclick="switchTab('exams')">🎓 Verify Student Exam Forms</button>
+            <button class="btn btn-secondary btn-sm" onclick="switchTab('marks')">📊 Enter &amp; Review Student Marks</button>
+            <button class="btn btn-secondary btn-sm" onclick="switchTab('presenty')">✔ Live Phone Presenty</button>
+            <button class="btn btn-secondary btn-sm" onclick="switchTab('library')">📚 Search Library Catalog</button>
+          </div>
+        `;
+      } else if (u.role === 'LIBRARIAN') {
+        actionsHtml = `
+          <div style="font-weight:700; font-size:0.9rem; margin-bottom:8px; color:var(--text);">📚 Chief Librarian Portal</div>
+          <div style="display:grid; grid-template-columns:1fr; gap:8px;">
+            <button class="btn btn-primary btn-sm" onclick="switchTab('library'); switchLibrarySub('catalog');">📖 Book Catalog &amp; Stock</button>
+            <button class="btn btn-secondary btn-sm" onclick="switchTab('library'); switchLibrarySub('mybooks');">📥 Return Books &amp; Fines</button>
+          </div>
+        `;
+      } else {
+        actionsHtml = `
+          <div style="font-weight:700; font-size:0.9rem; margin-bottom:8px; color:var(--text);">🎓 Student Portal</div>
+          <div style="display:grid; grid-template-columns:1fr; gap:8px;">
+            <button class="btn btn-primary btn-sm" onclick="switchTab('exams')">🎓 Check Exam Form &amp; Seat No</button>
+            <button class="btn btn-secondary btn-sm" onclick="switchTab('library')">📚 My Borrowed Books &amp; Due Dates</button>
+            <button class="btn btn-secondary btn-sm" onclick="switchTab('marks')">📊 Progress, Marks &amp; Practicals</button>
+            <button class="btn btn-secondary btn-sm" onclick="switchTab('presenty')">✔ Mark Phone Attendance</button>
+          </div>
+        `;
+      }
+
+      document.getElementById("portalActions").innerHTML = actionsHtml;
+    }
+
+    function logoutPortal() {
+      loggedInUser = null;
+      document.getElementById("portalLoginForm").style.display = "block";
+      document.getElementById("portalDashboard").style.display = "none";
+      document.getElementById("portalUser").value = "";
+      document.getElementById("portalPass").value = "";
     }
 
     // --- Display Notice Helper ---

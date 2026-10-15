@@ -73,6 +73,10 @@ public class MarksDAO {
         return list;
     }
 
+    public List<Marks> getMarksByStudentId(int studentId) {
+        return getByStudent(studentId);
+    }
+
     private Marks mapRow(ResultSet rs) throws SQLException {
         Marks m = new Marks();
         m.setMarkId(rs.getInt("mark_id"));

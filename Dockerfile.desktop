@@ -1,0 +1,49 @@
+# NextCampus – Web-Accessible Desktop GUI (TigerVNC + noVNC + Openbox)
+# Allows running the Java Swing desktop GUI directly inside a browser!
+
+FROM eclipse-temurin:21-jdk-jammy
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install TigerVNC (integrated X11 + VNC server), noVNC, window manager, and font packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    tigervnc-standalone-server \
+    tigervnc-tools \
+    novnc \
+    websockify \
+    openbox \
+    sqlite3 \
+    curl \
+    libxext6 \
+    libxrender1 \
+    libxtst6 \
+    libxi6 \
+    libfreetype6 \
+    fonts-dejavu-core \
+    xfonts-base \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY database/ /app/database/
+COPY java/ /app/java/
+COPY entrypoint-desktop.sh /app/entrypoint-desktop.sh
+
+# Compile Java code
+RUN mkdir -p /app/java/out && \
+    javac -cp "java/lib/*:java/src" -d /app/java/out \
+    java/src/com/college/sms/*.java \
+    java/src/com/college/sms/db/*.java \
+    java/src/com/college/sms/model/*.java \
+    java/src/com/college/sms/dao/*.java \
+    java/src/com/college/sms/ui/*.java \
+    java/src/com/college/sms/util/*.java
+
+RUN chmod +x /app/entrypoint-desktop.sh && \
+    (ln -sf /usr/share/novnc/vnc.html /usr/share/novnc/index.html || true)
+
+VOLUME ["/app/database"]
+
+# 6080 for noVNC web client, 5900 for native VNC client
+EXPOSE 6080 5900
+
+ENTRYPOINT ["/app/entrypoint-desktop.sh"]

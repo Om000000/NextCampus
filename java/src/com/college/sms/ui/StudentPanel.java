@@ -2,6 +2,7 @@ package com.college.sms.ui;
 
 import com.college.sms.dao.StudentDAO;
 import com.college.sms.model.Student;
+import com.college.sms.util.Theme;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -44,6 +45,7 @@ public class StudentPanel extends JPanel {
             }
         };
         table = new JTable(model);
+        Theme.styleTable(table);
         add(new JScrollPane(table), BorderLayout.CENTER);
 
         JPanel form = new JPanel(new GridLayout(4, 4, 6, 6));

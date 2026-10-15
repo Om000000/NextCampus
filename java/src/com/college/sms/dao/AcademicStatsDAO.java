@@ -78,6 +78,43 @@ public class AcademicStatsDAO {
         }
     }
 
+    public AcademicStats getStatsByStudentId(int studentId) {
+        String sql = "SELECT s.student_id, s.roll_no, s.full_name, "
+                + "COALESCE(a.stat_id, 0) AS stat_id, "
+                + "COALESCE(a.assignments_completed, 0) AS assignments_completed, "
+                + "COALESCE(a.total_assignments, 5) AS total_assignments, "
+                + "COALESCE(a.practicals_completed, 0) AS practicals_completed, "
+                + "COALESCE(a.total_practicals, 10) AS total_practicals, "
+                + "COALESCE(a.remarks, 'In Progress') AS remarks, "
+                + "COALESCE(a.updated_at, '') AS updated_at "
+                + "FROM students s "
+                + "LEFT JOIN student_academic_stats a ON s.student_id = a.student_id "
+                + "WHERE s.student_id = ?";
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, studentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    AcademicStats a = new AcademicStats();
+                    a.setStudentId(rs.getInt("student_id"));
+                    a.setRollNo(rs.getString("roll_no"));
+                    a.setStudentName(rs.getString("full_name"));
+                    a.setStatId(rs.getInt("stat_id"));
+                    a.setAssignmentsCompleted(rs.getInt("assignments_completed"));
+                    a.setTotalAssignments(rs.getInt("total_assignments"));
+                    a.setPracticalsCompleted(rs.getInt("practicals_completed"));
+                    a.setTotalPracticals(rs.getInt("total_practicals"));
+                    a.setRemarks(rs.getString("remarks"));
+                    a.setUpdatedAt(rs.getString("updated_at"));
+                    return a;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Get academic stats by student id failed: " + e.getMessage());
+        }
+        return null;
+    }
+
     public String getActiveNotice() {
         String sql = "SELECT notice_text FROM classroom_notices WHERE is_active=1 ORDER BY posted_at DESC LIMIT 1";
         try (Connection con = DBConnection.getConnection();
