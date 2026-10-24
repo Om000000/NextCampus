@@ -40,4 +40,5 @@ C:\Users\91883\ty-bba-ca-sem5\java\src\com\college\sms\ui\TimetablePresentyPanel
 C:\Users\91883\ty-bba-ca-sem5\java\src\com\college\sms\ui\UserManagementPanel.java
 C:\Users\91883\ty-bba-ca-sem5\java\src\com\college\sms\util\AppIcon.java
 C:\Users\91883\ty-bba-ca-sem5\java\src\com\college\sms\util\BluetoothHash.java
+C:\Users\91883\ty-bba-ca-sem5\java\src\com\college\sms\util\CaptureRealSwingScreens.java
 C:\Users\91883\ty-bba-ca-sem5\java\src\com\college\sms\util\Theme.java

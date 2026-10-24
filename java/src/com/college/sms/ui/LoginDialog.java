@@ -19,212 +19,374 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.Insets;
+import java.io.File;
 
 /**
- * Clean, modern role-based login dialog with quick-fill demo buttons and NextCampus Dark Theme.
+ * Modern two-pane split login window matching the official report System Output & Validation screenshots.
+ * Left Card: College emblem, NextCampus ERP branding, department info, and feature list.
+ * Right Card: Role selection tabs, credentials inputs, demo quick sign-in chips, and login button.
  */
 public class LoginDialog extends JDialog {
 
     private final UserDAO userDAO = new UserDAO();
-    private final JTextField txtUsername = new JTextField(15);
-    private final JPasswordField txtPassword = new JPasswordField(15);
-    private final JLabel lblMsg = new JLabel(" ", SwingConstants.CENTER);
+    private final JTextField txtUsername = new JTextField(18);
+    private final JPasswordField txtPassword = new JPasswordField(18);
+    private final JLabel lblMsg = new JLabel(" ", SwingConstants.LEFT);
     private User authenticatedUser = null;
 
+    // Role Tab buttons
+    private final JButton btnTabHod = new JButton("HOD / Admin");
+    private final JButton btnTabTeacher = new JButton("Teacher");
+    private final JButton btnTabLib = new JButton("Librarian");
+    private final JButton btnTabStudent = new JButton("Student");
+    private String selectedRole = "HOD";
+
     public LoginDialog(JFrame parent) {
-        super(parent, "NextCampus – Role-Based Login", true);
-        setSize(500, 470);
+        super(parent, "NextCampus – Multi-Role Academic Authentication (HRM Pune)", true);
+        setSize(920, 530);
         setLocationRelativeTo(parent);
         setResizable(false);
         setLayout(new BorderLayout(0, 0));
         getContentPane().setBackground(Theme.BG);
 
-        // Apply NextCampus Icon to Window
+        // Apply NextCampus Transparent Icon to Window
         AppIcon.applyTo(this);
 
-        // 1. HEADER (NextCampus Logo with Transparent Icon)
-        JPanel pnlHeader = new JPanel();
-        pnlHeader.setBackground(Theme.CARD_BG);
-        pnlHeader.setLayout(new BorderLayout(12, 0));
-        pnlHeader.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.CARD_BORDER),
-                BorderFactory.createEmptyBorder(16, 20, 16, 20)
+        // TOP WINDOW BAR (Title matching report mockup)
+        JPanel pnlWindowBar = new JPanel(new BorderLayout(8, 0));
+        pnlWindowBar.setBackground(new Color(30, 41, 59));
+        pnlWindowBar.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
+
+        JLabel lblWinTitle = new JLabel("NextCampus – Multi-Role Academic Authentication (HRM Pune)");
+        lblWinTitle.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        lblWinTitle.setForeground(new Color(241, 245, 249));
+        pnlWindowBar.add(lblWinTitle, BorderLayout.WEST);
+
+        // Mini window indicator dots
+        JPanel pnlDots = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 4));
+        pnlDots.setOpaque(false);
+        JLabel dotGreen = createCircleDot(new Color(34, 197, 94));
+        JLabel dotYellow = createCircleDot(new Color(234, 179, 8));
+        JLabel dotRed = createCircleDot(new Color(239, 68, 68));
+        pnlDots.add(dotGreen);
+        pnlDots.add(dotYellow);
+        pnlDots.add(dotRed);
+        pnlWindowBar.add(pnlDots, BorderLayout.EAST);
+        add(pnlWindowBar, BorderLayout.NORTH);
+
+        // MAIN CONTENT: 2-PANE SPLIT LAYOUT
+        JPanel pnlMain = new JPanel(new GridLayout(1, 2, 16, 0));
+        pnlMain.setBackground(Theme.BG);
+        pnlMain.setBorder(BorderFactory.createEmptyBorder(14, 16, 14, 16));
+
+        // =====================================================================
+        // LEFT CARD: College Emblem & NextCampus ERP Branding
+        // =====================================================================
+        JPanel pnlLeftCard = new JPanel();
+        pnlLeftCard.setLayout(new BoxLayout(pnlLeftCard, BoxLayout.Y_AXIS));
+        pnlLeftCard.setBackground(new Color(30, 41, 59));
+        pnlLeftCard.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(51, 65, 85), 2, true),
+                BorderFactory.createEmptyBorder(18, 20, 18, 20)
         ));
 
-        // Logo Image
+        // College Logo Image
         try {
-            Image iconImg = AppIcon.getAppIcon().getScaledInstance(44, 44, Image.SCALE_SMOOTH);
-            pnlHeader.add(new JLabel(new ImageIcon(iconImg)), BorderLayout.WEST);
+            File fLogo = new File("presentation_assets/college_logo.png");
+            if (!fLogo.exists()) {
+                fLogo = new File("../presentation_assets/college_logo.png");
+            }
+            if (fLogo.exists()) {
+                ImageIcon orig = new ImageIcon(fLogo.getAbsolutePath());
+                Image scaled = orig.getImage().getScaledInstance(220, 110, Image.SCALE_SMOOTH);
+                JLabel lblLogo = new JLabel(new ImageIcon(scaled));
+                lblLogo.setAlignmentX(LEFT_ALIGNMENT);
+                pnlLeftCard.add(lblLogo);
+                pnlLeftCard.add(Box.createVerticalStrut(12));
+            }
         } catch (Exception ignored) {}
 
-        JPanel pnlHeaderTexts = new JPanel();
-        pnlHeaderTexts.setLayout(new BoxLayout(pnlHeaderTexts, BoxLayout.Y_AXIS));
-        pnlHeaderTexts.setOpaque(false);
+        JLabel lblBrandTitle = new JLabel("NextCampus ERP");
+        lblBrandTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        lblBrandTitle.setForeground(new Color(16, 185, 129));
+        lblBrandTitle.setAlignmentX(LEFT_ALIGNMENT);
+        pnlLeftCard.add(lblBrandTitle);
 
-        JLabel lblTitle = new JLabel("NextCampus");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        lblTitle.setForeground(Theme.isDarkMode() ? Theme.ACCENT_EMERALD : Theme.ACCENT_EMERALD_DARK);
+        pnlLeftCard.add(Box.createVerticalStrut(4));
+        JLabel lblCollegeName = new JLabel("Hutatma Rajguru Mahavidyalaya");
+        lblCollegeName.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblCollegeName.setForeground(new Color(248, 250, 252));
+        lblCollegeName.setAlignmentX(LEFT_ALIGNMENT);
+        pnlLeftCard.add(lblCollegeName);
 
-        JLabel lblSub = new JLabel("College Student Management System – Role-Based Access");
-        lblSub.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblSub.setForeground(Theme.TEXT_MUTED);
+        JLabel lblDept = new JLabel("Department of BBA(CA)");
+        lblDept.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lblDept.setForeground(new Color(148, 163, 184));
+        lblDept.setAlignmentX(LEFT_ALIGNMENT);
+        pnlLeftCard.add(lblDept);
 
-        pnlHeaderTexts.add(lblTitle);
-        pnlHeaderTexts.add(Box.createVerticalStrut(2));
-        pnlHeaderTexts.add(lblSub);
-        pnlHeader.add(pnlHeaderTexts, BorderLayout.CENTER);
+        pnlLeftCard.add(Box.createVerticalStrut(14));
 
-        add(pnlHeader, BorderLayout.NORTH);
+        String[] features = {
+                "• Role-Based Access Control (RBAC)",
+                "• Dynamic Light/Dark Theme Engine",
+                "• Anti-Proxy Token Security (30s)",
+                "• Automated Exam Seat Allocation",
+                "• Embedded SQLite Relational Database"
+        };
+        for (String feat : features) {
+            JLabel lblF = new JLabel(feat);
+            lblF.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+            lblF.setForeground(new Color(203, 213, 225));
+            lblF.setAlignmentX(LEFT_ALIGNMENT);
+            pnlLeftCard.add(lblF);
+            pnlLeftCard.add(Box.createVerticalStrut(4));
+        }
 
-        // 2. CENTER PANEL (Form)
-        JPanel pnlCenter = new JPanel();
-        pnlCenter.setBackground(Theme.BG);
-        pnlCenter.setLayout(new BoxLayout(pnlCenter, BoxLayout.Y_AXIS));
-        pnlCenter.setBorder(BorderFactory.createEmptyBorder(16, 24, 12, 24));
+        pnlLeftCard.add(Box.createVerticalGlue());
+        JLabel lblVer = new JLabel("Version: 2.4.0 (TYBBA-CA Semester V)");
+        lblVer.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        lblVer.setForeground(new Color(100, 116, 139));
+        lblVer.setAlignmentX(LEFT_ALIGNMENT);
+        pnlLeftCard.add(lblVer);
 
-        // Quick Role Selection Banner
-        JLabel lblQuick = new JLabel("Quick Viva Demo Logins (Click to Auto-Fill):");
-        lblQuick.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        lblQuick.setForeground(Theme.isDarkMode() ? Theme.ACCENT_CYAN : Theme.ACCENT_BLUE);
-        lblQuick.setAlignmentX(CENTER_ALIGNMENT);
-        pnlCenter.add(lblQuick);
-        pnlCenter.add(Box.createVerticalStrut(8));
+        pnlMain.add(pnlLeftCard);
 
-        JPanel pnlQuick = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 4));
-        pnlQuick.setOpaque(false);
-
-        JButton btnHod = createRoleButton("👑 HOD (Admin)", new Color(30, 58, 82));
-        JButton btnTeacher = createRoleButton("👨‍🏫 Teacher", new Color(20, 70, 45));
-        JButton btnLibrarian = createRoleButton("📚 Librarian", new Color(85, 60, 20));
-        JButton btnStudent = createRoleButton("🎓 Student", new Color(60, 35, 85));
-
-        btnHod.addActionListener(e -> setCredentials("admin", "admin123"));
-        btnTeacher.addActionListener(e -> setCredentials("teacher", "teacher123"));
-        btnLibrarian.addActionListener(e -> setCredentials("librarian", "library123"));
-        btnStudent.addActionListener(e -> setCredentials("BBA001", "bba001"));
-
-        pnlQuick.add(btnHod);
-        pnlQuick.add(btnTeacher);
-        pnlQuick.add(btnLibrarian);
-        pnlQuick.add(btnStudent);
-        pnlCenter.add(pnlQuick);
-        pnlCenter.add(Box.createVerticalStrut(16));
-
-        // Form fields card
-        JPanel pnlFormCard = new JPanel(new GridBagLayout());
-        pnlFormCard.setBackground(Theme.CARD_BG);
-        pnlFormCard.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Theme.CARD_BORDER, 1),
+        // =====================================================================
+        // RIGHT CARD: Role Tabs & Authentication Form
+        // =====================================================================
+        JPanel pnlRightCard = new JPanel();
+        pnlRightCard.setLayout(new BoxLayout(pnlRightCard, BoxLayout.Y_AXIS));
+        pnlRightCard.setBackground(new Color(30, 41, 59));
+        pnlRightCard.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(51, 65, 85), 2, true),
                 BorderFactory.createEmptyBorder(16, 20, 16, 20)
         ));
 
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(8, 8, 8, 8);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        JLabel lblFormTitle = new JLabel("Sign In to Your Academic Portal");
+        lblFormTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        lblFormTitle.setForeground(new Color(248, 250, 252));
+        lblFormTitle.setAlignmentX(LEFT_ALIGNMENT);
+        pnlRightCard.add(lblFormTitle);
 
-        JLabel lblU = new JLabel("Username / Roll No:");
+        JLabel lblFormSub = new JLabel("Select your role to access relevant department features");
+        lblFormSub.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lblFormSub.setForeground(new Color(148, 163, 184));
+        lblFormSub.setAlignmentX(LEFT_ALIGNMENT);
+        pnlRightCard.add(lblFormSub);
+
+        pnlRightCard.add(Box.createVerticalStrut(12));
+
+        // 4 Role Selector Tabs
+        JPanel pnlRoleTabs = new JPanel(new GridLayout(1, 4, 6, 0));
+        pnlRoleTabs.setOpaque(false);
+        pnlRoleTabs.setAlignmentX(LEFT_ALIGNMENT);
+        pnlRoleTabs.setMaximumSize(new Dimension(500, 32));
+
+        styleRoleTab(btnTabHod, true);
+        styleRoleTab(btnTabTeacher, false);
+        styleRoleTab(btnTabLib, false);
+        styleRoleTab(btnTabStudent, false);
+
+        btnTabHod.addActionListener(e -> selectRoleTab("HOD"));
+        btnTabTeacher.addActionListener(e -> selectRoleTab("TEACHER"));
+        btnTabLib.addActionListener(e -> selectRoleTab("LIBRARIAN"));
+        btnTabStudent.addActionListener(e -> selectRoleTab("STUDENT"));
+
+        pnlRoleTabs.add(btnTabHod);
+        pnlRoleTabs.add(btnTabTeacher);
+        pnlRoleTabs.add(btnTabLib);
+        pnlRoleTabs.add(btnTabStudent);
+        pnlRightCard.add(pnlRoleTabs);
+
+        pnlRightCard.add(Box.createVerticalStrut(14));
+
+        // Username
+        JLabel lblU = new JLabel("Username / Registered Mobile:");
         lblU.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        lblU.setForeground(Theme.TEXT_MAIN);
-        gbc.gridx = 0; gbc.gridy = 0;
-        pnlFormCard.add(lblU, gbc);
+        lblU.setForeground(new Color(203, 213, 225));
+        lblU.setAlignmentX(LEFT_ALIGNMENT);
+        pnlRightCard.add(lblU);
+        pnlRightCard.add(Box.createVerticalStrut(4));
 
         txtUsername.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        txtUsername.setBackground(Theme.INPUT_BG);
-        txtUsername.setForeground(Theme.TEXT_MAIN);
-        txtUsername.setCaretColor(Theme.TEXT_MAIN);
+        txtUsername.setBackground(new Color(15, 23, 42));
+        txtUsername.setForeground(new Color(248, 250, 252));
+        txtUsername.setCaretColor(Color.WHITE);
+        txtUsername.setMaximumSize(new Dimension(500, 34));
+        txtUsername.setAlignmentX(LEFT_ALIGNMENT);
         txtUsername.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Theme.INPUT_BORDER, 1),
-                BorderFactory.createEmptyBorder(6, 8, 6, 8)
+                BorderFactory.createLineBorder(new Color(71, 85, 105), 1, true),
+                BorderFactory.createEmptyBorder(6, 10, 6, 10)
         ));
-        gbc.gridx = 1; gbc.gridy = 0;
-        pnlFormCard.add(txtUsername, gbc);
+        pnlRightCard.add(txtUsername);
 
-        JLabel lblP = new JLabel("Password:");
+        pnlRightCard.add(Box.createVerticalStrut(10));
+
+        // Password
+        JLabel lblP = new JLabel("Password / Security PIN:");
         lblP.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        lblP.setForeground(Theme.TEXT_MAIN);
-        gbc.gridx = 0; gbc.gridy = 1;
-        pnlFormCard.add(lblP, gbc);
+        lblP.setForeground(new Color(203, 213, 225));
+        lblP.setAlignmentX(LEFT_ALIGNMENT);
+        pnlRightCard.add(lblP);
+        pnlRightCard.add(Box.createVerticalStrut(4));
 
         txtPassword.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        txtPassword.setBackground(Theme.INPUT_BG);
-        txtPassword.setForeground(Theme.TEXT_MAIN);
-        txtPassword.setCaretColor(Theme.TEXT_MAIN);
+        txtPassword.setBackground(new Color(15, 23, 42));
+        txtPassword.setForeground(new Color(248, 250, 252));
+        txtPassword.setCaretColor(Color.WHITE);
+        txtPassword.setMaximumSize(new Dimension(500, 34));
+        txtPassword.setAlignmentX(LEFT_ALIGNMENT);
         txtPassword.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Theme.INPUT_BORDER, 1),
-                BorderFactory.createEmptyBorder(6, 8, 6, 8)
+                BorderFactory.createLineBorder(new Color(71, 85, 105), 1, true),
+                BorderFactory.createEmptyBorder(6, 10, 6, 10)
         ));
-        gbc.gridx = 1; gbc.gridy = 1;
-        pnlFormCard.add(txtPassword, gbc);
+        pnlRightCard.add(txtPassword);
 
-        pnlCenter.add(pnlFormCard);
-        pnlCenter.add(Box.createVerticalStrut(10));
+        pnlRightCard.add(Box.createVerticalStrut(10));
 
-        // Feedback label
-        lblMsg.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        lblMsg.setForeground(Theme.ACCENT_RED);
-        lblMsg.setAlignmentX(CENTER_ALIGNMENT);
-        pnlCenter.add(lblMsg);
+        // Demo Quick Sign-In row matching screenshot
+        JLabel lblQuick = new JLabel("Demo Quick Sign-In (Click to Auto-Fill):");
+        lblQuick.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        lblQuick.setForeground(new Color(148, 163, 184));
+        lblQuick.setAlignmentX(LEFT_ALIGNMENT);
+        pnlRightCard.add(lblQuick);
+        pnlRightCard.add(Box.createVerticalStrut(4));
 
-        add(pnlCenter, BorderLayout.CENTER);
+        JPanel pnlChips = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        pnlChips.setOpaque(false);
+        pnlChips.setAlignmentX(LEFT_ALIGNMENT);
+        pnlChips.setMaximumSize(new Dimension(500, 30));
 
-        // 3. BOTTOM BUTTONS
-        JPanel pnlBottom = new JPanel(new FlowLayout(FlowLayout.RIGHT, 14, 12));
-        pnlBottom.setBackground(Theme.CARD_BG);
-        pnlBottom.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Theme.CARD_BORDER));
+        JButton chipHod = createChipButton("HOD");
+        JButton chipTeacher = createChipButton("Teacher");
+        JButton chipLib = createChipButton("Librarian");
+        JButton chipStudent = createChipButton("Student (Omkar)");
+
+        chipHod.addActionListener(e -> { selectRoleTab("HOD"); setCredentials("admin", "admin123"); });
+        chipTeacher.addActionListener(e -> { selectRoleTab("TEACHER"); setCredentials("teacher", "teacher123"); });
+        chipLib.addActionListener(e -> { selectRoleTab("LIBRARIAN"); setCredentials("librarian", "library123"); });
+        chipStudent.addActionListener(e -> { selectRoleTab("STUDENT"); setCredentials("02", "student123"); });
+
+        pnlChips.add(chipHod);
+        pnlChips.add(chipTeacher);
+        pnlChips.add(chipLib);
+        pnlChips.add(chipStudent);
+        pnlRightCard.add(pnlChips);
+
+        pnlRightCard.add(Box.createVerticalStrut(8));
+
+        // Feedback message
+        lblMsg.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        lblMsg.setForeground(new Color(239, 68, 68));
+        lblMsg.setAlignmentX(LEFT_ALIGNMENT);
+        pnlRightCard.add(lblMsg);
+
+        pnlRightCard.add(Box.createVerticalGlue());
+
+        // Buttons row (Big Emerald Login + Exit)
+        JPanel pnlActions = new JPanel(new BorderLayout(8, 0));
+        pnlActions.setOpaque(false);
+        pnlActions.setAlignmentX(LEFT_ALIGNMENT);
+        pnlActions.setMaximumSize(new Dimension(500, 38));
+
+        JButton btnLogin = new JButton("SECURE LOGIN →");
+        btnLogin.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        btnLogin.setBackground(new Color(16, 185, 129));
+        btnLogin.setForeground(Color.WHITE);
+        btnLogin.setOpaque(true);
+        btnLogin.setFocusPainted(false);
+        btnLogin.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnLogin.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
+        btnLogin.addActionListener(e -> performLogin());
 
         JButton btnExit = new JButton("Exit");
-        btnExit.setPreferredSize(new Dimension(85, 34));
-        btnExit.setBackground(Theme.isDarkMode() ? new Color(45, 55, 72) : new Color(226, 232, 240));
-        btnExit.setForeground(Theme.TEXT_MAIN);
         btnExit.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        btnExit.setBorder(BorderFactory.createLineBorder(Theme.CARD_BORDER, 1));
+        btnExit.setBackground(new Color(51, 65, 85));
+        btnExit.setForeground(new Color(203, 213, 225));
         btnExit.setOpaque(true);
+        btnExit.setFocusPainted(false);
+        btnExit.setBorder(BorderFactory.createEmptyBorder(8, 14, 8, 14));
         btnExit.addActionListener(e -> {
             authenticatedUser = null;
             dispose();
             System.exit(0);
         });
 
-        JButton btnLogin = new JButton("Sign In ➔");
-        btnLogin.setPreferredSize(new Dimension(110, 34));
-        btnLogin.setBackground(Theme.ACCENT_EMERALD);
-        btnLogin.setForeground(Color.WHITE);
-        btnLogin.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btnLogin.setOpaque(true);
-        btnLogin.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(25, 205, 145), 1),
-                BorderFactory.createEmptyBorder(6, 12, 6, 12)
-        ));
-        btnLogin.addActionListener(e -> performLogin());
+        pnlActions.add(btnExit, BorderLayout.WEST);
+        pnlActions.add(btnLogin, BorderLayout.CENTER);
+        pnlRightCard.add(pnlActions);
 
-        // Press Enter to login
-        getRootPane().setDefaultButton(btnLogin);
+        pnlMain.add(pnlRightCard);
+        add(pnlMain, BorderLayout.CENTER);
 
-        pnlBottom.add(btnExit);
-        pnlBottom.add(btnLogin);
-        add(pnlBottom, BorderLayout.SOUTH);
-
-        // Default credentials
+        // Default login prefilled as HOD
+        selectRoleTab("HOD");
         setCredentials("admin", "admin123");
+        getRootPane().setDefaultButton(btnLogin);
     }
 
-    private JButton createRoleButton(String text, Color bg) {
-        JButton btn = new JButton(text);
+    private JLabel createCircleDot(Color c) {
+        JLabel l = new JLabel("●");
+        l.setFont(new Font("SansSerif", Font.BOLD, 14));
+        l.setForeground(c);
+        return l;
+    }
+
+    private void styleRoleTab(JButton btn, boolean active) {
         btn.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        btn.setBackground(bg);
-        btn.setForeground(Theme.TEXT_MAIN);
+        btn.setFocusPainted(false);
+        btn.setOpaque(true);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        if (active) {
+            btn.setBackground(new Color(16, 185, 129));
+            btn.setForeground(Color.WHITE);
+            btn.setBorder(BorderFactory.createEmptyBorder(6, 4, 6, 4));
+        } else {
+            btn.setBackground(new Color(51, 65, 85));
+            btn.setForeground(new Color(203, 213, 225));
+            btn.setBorder(BorderFactory.createEmptyBorder(6, 4, 6, 4));
+        }
+    }
+
+    private void selectRoleTab(String role) {
+        this.selectedRole = role;
+        styleRoleTab(btnTabHod, "HOD".equalsIgnoreCase(role));
+        styleRoleTab(btnTabTeacher, "TEACHER".equalsIgnoreCase(role));
+        styleRoleTab(btnTabLib, "LIBRARIAN".equalsIgnoreCase(role));
+        styleRoleTab(btnTabStudent, "STUDENT".equalsIgnoreCase(role));
+
+        if ("HOD".equalsIgnoreCase(role)) {
+            setCredentials("admin", "admin123");
+        } else if ("TEACHER".equalsIgnoreCase(role)) {
+            setCredentials("teacher", "teacher123");
+        } else if ("LIBRARIAN".equalsIgnoreCase(role)) {
+            setCredentials("librarian", "library123");
+        } else if ("STUDENT".equalsIgnoreCase(role)) {
+            setCredentials("02", "student123");
+        }
+    }
+
+    private JButton createChipButton(String title) {
+        JButton btn = new JButton(title);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        btn.setBackground(new Color(51, 65, 85));
+        btn.setForeground(new Color(56, 189, 248));
         btn.setOpaque(true);
         btn.setFocusPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btn.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(bg.brighter(), 1),
-                BorderFactory.createEmptyBorder(5, 10, 5, 10)
+                BorderFactory.createLineBorder(new Color(71, 85, 105), 1, true),
+                BorderFactory.createEmptyBorder(3, 8, 3, 8)
         ));
         return btn;
     }
@@ -250,7 +412,7 @@ public class LoginDialog extends JDialog {
             this.authenticatedUser = user;
             dispose();
         } else {
-            lblMsg.setText("Invalid credentials. Try quick viva buttons above.");
+            lblMsg.setText("Invalid credentials. Try demo quick sign-in buttons.");
         }
     }
 
